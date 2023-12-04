@@ -10,6 +10,8 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ```{r library}
+set.seed(42)
+
 #Declare vector of required packages
 packages <- c("tidyverse", "readr", "mclust")
 
@@ -90,10 +92,75 @@ dens_plots[["dens_grid"]]<-ggpubr::ggarrange(
 
 ```
 ```{r create_folds}
-
+#We create folds für 5-fold 10 times repeated cross validation. Caret performs stratified CV by default. The returned vector gives the rownumber of the training cases.
 folds <- caret::createMultiFolds(data %>% pull(uid), k=5, times=10)
 
 ```
+
+
+```{r hyperparameter_tuning}
+
+#We use cross validation to find the optimal number of clusters in lpa. We form a grid of 3 to 7 clusters which are the cluster numbers we expect thepretically. The models are added to a tibble - the lpa models object.
+lpa_models <- list()
+G <- 3:7
+
+for (g in G){
+  lpa_models[[as.character(g)]] <- lapply(folds, function(x) {Mclust(data = data[x,] %>% select(-uid), prior=priorControl(), G=g, modelNames=c("VVV"))}) 
+}
+
+#the create the tibble and flatten it to avoid working with hierarchical lists.
+lpa_models <- tibble(names = lpa_models %>% list_flatten() %>% names(), models = lpa_models %>% list_flatten())
+
+#We create a tidier representation of to what fold, repetition cycle a model belongs and how many clusters were fitted.
+names <- lpa_models %>% pull(names) %>% str_split_fixed("_", 2) %>% as_tibble() %>% rename(nclust=V1, fold=V2) 
+
+names <- names %>% select(-fold) %>% cbind( names %>% pull(fold) %>% str_split_fixed("\\.", 2) %>% as_tibble() %>% rename(fold = V1, rep = V2))
+
+lpa_models <- cbind(names, lpa_models)
+lpa_models <- lpa_models %>% select(-names)
+
+#We add the folds used for trainig to the tibble to have all the information concisely stored in one place.
+lpa_models <- lpa_models %>% mutate(folds=replicate(5, folds, simplify = FALSE) %>% list_flatten())
+
+
+#We need to create cluster predictions to evaluate the out of sample performance of the clustering. The predictions are first stored in lpa_evaluation and are then added to lpa_models. The uids of the cases that were predicted in each test prediction can be found in cv_predicted_clusters.
+lpa_evaluation <- list()
+
+for (i in 1:nrow(lpa_models)){
+  
+  model <- lpa_models$models[[i]]
+  newdata <- data[setdiff(1:nrow(data), lpa_models$folds[[i]]),] %>% select(-uid)
+  lpa_evaluation[[i]] <- predict.Mclust(model, newdata)$classification
+}
+
+test_folds <- list()
+
+for (i in 1:nrow(lpa_models)){
+  test_folds[[i]] <- data[setdiff(1:nrow(data), lpa_models$folds[[i]]),] %>% pull(uid)
+}
+
+lpa_models <- lpa_models %>% mutate(test_fold_uids = test_folds, cv_predicted_clusters = lpa_evaluation)
+
+
+
+#tidy up behind us
+rm(fold, folds, lpa_evaluation, model, names, newdata, test_folds)
+
+
+
+
+ClusterR::silhouette_of_clusters(data[data$uid %in% (lpa_models[x,c("test_fold_uids")] %>% unlist()),] %>% select(-uid), lpa_models[x,] %>% pull(cv_predicted_clusters) %>% unlist())$silhouette_global_average
+
+
+lpa_models <- lpa_models %>% mutate(cv_silhouette = lapply(1:nrow(lpa_models), function(x){
+  ClusterR::silhouette_of_clusters(data[data$uid %in% (lpa_models[x,c("test_fold_uids")] %>% unlist()),] %>% select(-uid), lpa_models[x,] %>% pull(cv_predicted_clusters) %>% unlist())$silhouette_global_average
+}) %>% unlist()) 
+
+
+
+```
+
+
 
 
 
