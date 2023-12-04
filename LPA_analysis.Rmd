@@ -1,0 +1,116 @@
+---
+title: "LPA analysis"
+author: "Frederic Gnielka"
+date: "2023-11-28"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r library}
+#Declare vector of required packages
+packages <- c("tidyverse", "readr", "mclust")
+
+#load function to check whether required packages are installed.
+source("./functions/check_required_packages.R")
+check_required_packages(packages)
+
+#load required packages
+lapply(packages, require, character.only=T)
+
+```
+```{r load_data}
+
+data <- haven::read_spss("./data/data raw/dataE_clear5 2209.sav") %>% select(CASE, sexdrive2, CSBD, PPCS_6, meffort, socialanx, lon, mvalue, attr)
+
+colnames(data) <- c("uid", "sex_drive", "csbd", "ppcs", "soi_r_me", "social_anxiety", "lon", "mvs", "attraction_to_children")
+
+```
+
+
+```{r outlier_detection}
+###Distribution plots####
+dens_plots <- list()
+##sex drive
+dens_plots[["sex_drive"]]<-ggplot(data, aes(x=sex_drive)) + 
+ geom_histogram(aes(y=..density..), colour="black", fill="white")+
+ geom_density(alpha=.2, fill="#FF6666")
+
+##csbd
+dens_plots[["csbd"]]<-ggplot(data, aes(x=csbd)) + 
+ geom_histogram(aes(y=..density..), colour="black", fill="white")+
+ geom_density(alpha=.2, fill="#FF6666")
+
+##ppcs
+dens_plots[["ppcs"]]<-ggplot(data, aes(x=ppcs)) + 
+ geom_histogram(aes(y=..density..), colour="black", fill="white")+
+ geom_density(alpha=.2, fill="#FF6666")
+
+##soi-r_me
+dens_plots[["soi_r_me"]]<-ggplot(data, aes(x=soi_r_me)) + 
+ geom_histogram(aes(y=..density..), colour="black", fill="white")+
+ geom_density(alpha=.2, fill="#FF6666")
+
+##social anxiety
+dens_plots[["social_anxiety"]]<-ggplot(data, aes(x=social_anxiety)) + 
+ geom_histogram(aes(y=..density..), colour="black", fill="white")+
+ geom_density(alpha=.2, fill="#FF6666")
+
+##lon
+dens_plots[["lon"]]<-ggplot(data, aes(x=lon)) + 
+ geom_histogram(aes(y=..density..), colour="black", fill="white")+
+ geom_density(alpha=.2, fill="#FF6666")
+
+##mvs
+dens_plots[["mvs"]]<-ggplot(data, aes(x=mvs)) + 
+ geom_histogram(aes(y=..density..), colour="black", fill="white")+
+ geom_density(alpha=.2, fill="#FF6666")
+
+##attraction to children
+dens_plots[["attraction_to_children"]]<-ggplot(data, aes(x=attraction_to_children)) + 
+ geom_histogram(aes(y=..density..), colour="black", fill="white")+
+ geom_density(alpha=.2, fill="#FF6666")
+
+dens_plots[["dens_grid"]]<-ggpubr::ggarrange(
+          dens_plots[["sex_drive"]],
+          dens_plots[["csbd"]],
+          dens_plots[["ppcs"]],
+          dens_plots[["soi_r_me"]],
+          dens_plots[["mvs"]],
+          dens_plots[["social_anxiety"]],
+          dens_plots[["lon"]],
+          dens_plots[["mvs"]],
+          dens_plots[["attraction_to_children"]],
+          ncol=5,
+          nrow=2
+          )
+
+
+```
+```{r create_folds}
+
+folds <- caret::createMultiFolds(data %>% pull(uid), k=5, times=10)
+
+```
+
+
+
+```{r gaussian_mixture_model}
+
+choose_BIC <- mclustBIC(data %>% select(-uid), prior = priorControl())
+plot(choose_BIC)
+
+lpa_models <- list()
+
+for (i in 3:7){
+  lpa_models[[as.character(i)]] <- Mclust(data %>% select(-uid), prior=priorControl(), G=i, modelNames=c("VVV"))
+}
+
+
+
+
+
+```
+
