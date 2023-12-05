@@ -146,15 +146,79 @@ lpa_models <- lpa_models %>% mutate(test_fold_uids = test_folds, cv_predicted_cl
 #tidy up behind us
 rm(fold, folds, lpa_evaluation, model, names, newdata, test_folds)
 
+#We compute the silhouette index on our cross validation sets. The 
 
-
-
-ClusterR::silhouette_of_clusters(data[data$uid %in% (lpa_models[x,c("test_fold_uids")] %>% unlist()),] %>% select(-uid), lpa_models[x,] %>% pull(cv_predicted_clusters) %>% unlist())$silhouette_global_average
-
-
+#We compute the silhouette index for each fold. 
 lpa_models <- lpa_models %>% mutate(cv_silhouette = lapply(1:nrow(lpa_models), function(x){
   ClusterR::silhouette_of_clusters(data[data$uid %in% (lpa_models[x,c("test_fold_uids")] %>% unlist()),] %>% select(-uid), lpa_models[x,] %>% pull(cv_predicted_clusters) %>% unlist())$silhouette_global_average
 }) %>% unlist()) 
+
+
+#We create the Dunn Index for each fold as well. And we even choose two different metrics: Euclidean distance and Cosine dissimilarity, for more specific comparison. Dunn index has a minimum of 0 and a maximum of 1 - should be maximized.
+
+source("./functions/Cosine Similarity.R")
+
+#Computes the dunn index with cosine similarity instead of euclidean distances.
+lpa_models <- lpa_models %>% mutate(cv_dunn_cos = lapply(1:nrow(lpa_models),function(x){
+  #Get a distance measure to base the Dunn index on. Cosine is nice, because the scale differences are less important as with euclidean distances.
+  distance <- data[data$uid %in% (lpa_models[x,c("test_fold_uids")] %>% unlist()),] %>% select(-uid) %>% cos_dissim
+  #Get predicted cluster memberships
+  clusters <- (lpa_models[x,] %>% pull(cv_predicted_clusters) %>% unlist())
+  #feed both in the dunn function from the clValid package
+  return(clValid::dunn(distance=distance, clusters=clusters))
+}) %>% unlist())
+
+
+#Computes the dunn index based on euclidean distances
+lpa_models <- lpa_models %>% mutate(cv_dunn = lapply(1:nrow(lpa_models),function(x){
+  #Get a distance measure to base the Dunn index on. Cosine is nice, because the scale differences are less important as with euclidean distances.
+  distance <- data[data$uid %in% (lpa_models[x,c("test_fold_uids")] %>% unlist()),] %>% select(-uid)
+  #Get predicted cluster memberships
+  clusters <- (lpa_models[x,] %>% pull(cv_predicted_clusters) %>% unlist())
+  #feed both in the dunn function from the clValid package
+  return(clValid::dunn(Data=distance, clusters=clusters, method = "euclidean"))
+}) %>% unlist())
+
+#Last but not least, we compute the Connectivty index for the clusters. Using the same logic, once for euclidean distances, once for cosine dissimilarities.Connectivity should be near 0. 
+
+#creating connectivity index based on cosine dissimilarity
+lpa_models <- lpa_models %>% mutate(cv_conn_cos = lapply(1:nrow(lpa_models),function(x){
+  #Get a distance measure to base the connectivity index on. Cosine is nice, because the scale differences are less important as with euclidean distances. 
+  distance <- data[data$uid %in% (lpa_models[x,c("test_fold_uids")] %>% unlist()),] %>% select(-uid) %>% cos_dissim
+  #Get predicted cluster memberships
+  clusters <- (lpa_models[x,] %>% pull(cv_predicted_clusters) %>% unlist())
+  #feed both in the dunn function from the clValid package
+  return(clValid::connectivity(distance=distance, clusters=clusters))
+}) %>% unlist())
+
+#creating Connectivity index for euclidean distances
+lpa_models <- lpa_models %>% mutate(cv_conn = lapply(1:nrow(lpa_models),function(x){
+  #Get a distance measure to base the Dunn index on. Cosine is nice, because the scale differences are less important as with euclidean distances.
+  distance <- data[data$uid %in% (lpa_models[x,c("test_fold_uids")] %>% unlist()),] %>% select(-uid)
+  #Get predicted cluster memberships
+  clusters <- (lpa_models[x,] %>% pull(cv_predicted_clusters) %>% unlist())
+  #feed both in the dunn function from the clValid package
+  return(clValid::connectivity(Data=distance, clusters=clusters, method = "euclidean"))
+}) %>% unlist())
+
+lpa_model_eval <- lpa_models %>% group_by(nclust) %>% summarize(conn_cos = mean(cv_conn_cos), conn = mean(cv_conn), dunn = mean(cv_dunn), dunn_cos = mean(cv_dunn_cos), sil=mean(cv_silhouette))
+
+```
+
+
+```{r data_export}
+
+
+results <- lpa_models %>% select(nclust, fold, rep, test_fold_uids, cv_predicted_clusters)
+
+results <- results  %>% unite("dat_name", nclust:fold:rep, sep="_", remove=FALSE) %>% select(-nclust, -fold,-rep) 
+
+
+for (i in 1:nrow(results)){
+  t <- tibble(uid = results[i,] %>% pull(test_fold_uids) %>% unlist(), cluster = results[i,] %>% pull(cv_predicted_clusters) %>% unlist()) %>% left_join(data, by=join_by(uid == uid))
+  name <- paste("./data/data_prepared/",results[i,c("dat_name")],".csv", sep="")
+  readr::write_csv(x=t, file=name)
+}
 
 
 
@@ -164,7 +228,10 @@ lpa_models <- lpa_models %>% mutate(cv_silhouette = lapply(1:nrow(lpa_models), f
 
 
 
+
+
 ```{r gaussian_mixture_model}
+#That is the initial code for modelling the LPAs. ONly in sample fit is used to determine numbers of clusters. The resulting BICS appeared pretty close to one another, so that I got suspicious.
 
 choose_BIC <- mclustBIC(data %>% select(-uid), prior = priorControl())
 plot(choose_BIC)
