@@ -213,24 +213,38 @@ results <- lpa_models %>% select(nclust, fold, rep, test_fold_uids, cv_predicted
 
 results <- results  %>% unite("dat_name", nclust:fold:rep, sep="_", remove=FALSE) %>% select(-nclust, -fold,-rep) 
 
+#Here we paste all predicted cluster memberships of all folds in seperate csv files and put them in the data prepared folder. From there the DBCV script can grab them and compute a DBCV value for each of the 
 
-for (i in 1:nrow(results)){
+#for (i in 1:nrow(results)){
   t <- tibble(uid = results[i,] %>% pull(test_fold_uids) %>% unlist(), cluster = results[i,] %>% pull(cv_predicted_clusters) %>% unlist()) %>% left_join(data, by=join_by(uid == uid))
   name <- paste("./data/data_prepared/",results[i,c("dat_name")],".csv", sep="")
   readr::write_csv(x=t, file=name)
 }
 
 
+```
+
+
+
+```{r insert_dbcv}
+
+dbcv <- readr::read_csv("./data/data_prepared/LPA_cv_predicted_clusters/dbcv_dat.csv") %>% as.tibble() %>% select(dbcv)
+
+lpa_models <- lpa_models %>% mutate("dbcv" = dbcv)
+
+
+#Insert the cross-validated clustering coefficients. For some reason the column "dbcv" does not show as such, but as "dbcv$dbcv", but that seams to me to be just a cosmetic problem. 
+lpa_model_eval <- lpa_model_eval %>% mutate(dbcv = lpa_models %>% group_by(nclust) %>% summarize(dbcv = mean(dbcv$dbcv, na.rm=T)) %>% select(dbcv))
 
 ```
 
 
 
 
-
-
-
 ```{r gaussian_mixture_model}
+
+###DO NOT RUN THIS!
+
 #That is the initial code for modelling the LPAs. ONly in sample fit is used to determine numbers of clusters. The resulting BICS appeared pretty close to one another, so that I got suspicious.
 
 choose_BIC <- mclustBIC(data %>% select(-uid), prior = priorControl())
@@ -242,9 +256,7 @@ for (i in 3:7){
   lpa_models[[as.character(i)]] <- Mclust(data %>% select(-uid), prior=priorControl(), G=i, modelNames=c("VVV"))
 }
 
-
-
-
-
 ```
+
+
 
