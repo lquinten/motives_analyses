@@ -1,0 +1,43 @@
+---
+title: "LCA_analysis"
+author: "Frederic Gnielka"
+date: "2023-12-20"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r library}
+set.seed(42)
+
+#Declare vector of required packages
+packages <- c("tidyverse", "readr", "poLCA")
+
+#load function to check whether required packages are installed.
+source("./functions/check_required_packages.R")
+check_required_packages(packages)
+
+#load required packages
+lapply(packages, require, character.only=T)
+
+```
+
+
+```{r data}
+#We are loading the gender encoding in the analysis script.
+#Apparently a 2 represents a male. We want to only grab males. 
+data_males <- haven::read_spss("./data/data raw/dataE_clear5 2209.sav") %>% dplyr::select(gender, CASE, sexdrive2, CSBD, PPCS_6, meffort, socialanx, lon, mvalue, attr) %>% filter(gender == 2) %>% dplyr::select(-gender)
+
+data_females <- haven::read_spss("./data/data raw/dataE_clear5 2209.sav") %>% dplyr::select(gender, CASE, sexdrive2, CSBD, PPCS_6, meffort, socialanx, lon, mvalue, attr) %>% filter(gender == 1) %>% dplyr::select(-gender)
+
+#I refrain from renaming the variables as I have done before to make interpretation for Laura easier. 
+
+```
+```{r LCA_analysis}
+
+
+
+```
+
