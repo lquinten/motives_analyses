@@ -27,6 +27,8 @@ lapply(packages, require, character.only=T)
 
 data <- haven::read_spss("./data/data raw/dataE_clear5 2209.sav") %>% select(CASE, sexdrive2, CSBD, PPCS_6, meffort, socialanx, lon, mvalue, attr)
 
+
+
 colnames(data) <- c("uid", "sex_drive", "csbd", "ppcs", "soi_r_me", "social_anxiety", "lon", "mvs", "attraction_to_children")
 
 ```

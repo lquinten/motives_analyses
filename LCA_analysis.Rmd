@@ -13,7 +13,7 @@ knitr::opts_chunk$set(echo = TRUE)
 set.seed(42)
 
 #Declare vector of required packages
-packages <- c("tidyverse", "readr", "poLCA")
+packages <- c("tidyverse", "readr", "tidySEM")
 
 #load function to check whether required packages are installed.
 source("./functions/check_required_packages.R")
@@ -28,16 +28,126 @@ lapply(packages, require, character.only=T)
 ```{r data}
 #We are loading the gender encoding in the analysis script.
 #Apparently a 2 represents a male. We want to only grab males. 
-data_males <- haven::read_spss("./data/data raw/dataE_clear5 2209.sav") %>% dplyr::select(gender, CASE, sexdrive2, CSBD, PPCS_6, meffort, socialanx, lon, mvalue, attr) %>% filter(gender == 2) %>% dplyr::select(-gender)
+data_males <- haven::read_spss("./data/data raw/dataE_2112.sav") %>% dplyr::select(gender, CASE, sexdrive2, CSBD, PPCS_6, meffort, socialanx, lon, mvalue, attr) %>% filter(gender == 2) %>% dplyr::select(-gender)
 
-data_females <- haven::read_spss("./data/data raw/dataE_clear5 2209.sav") %>% dplyr::select(gender, CASE, sexdrive2, CSBD, PPCS_6, meffort, socialanx, lon, mvalue, attr) %>% filter(gender == 1) %>% dplyr::select(-gender)
+data_females <- haven::read_spss("./data/data raw/dataE_2112.sav") %>% dplyr::select(gender, CASE, sexdrive2, CSBD, PPCS_6, meffort, socialanx, lon, mvalue, attr) %>% filter(gender == 1) %>% dplyr::select(-gender)
 
 #I refrain from renaming the variables as I have done before to make interpretation for Laura easier. 
 
 ```
-```{r LCA_analysis}
+
+```{r factor}
+#I factorise and bin the variables in the dataframe, such that I get hopefully enough cases per bin to estimate parameters in the LCA. Attr is dichotomised, so that we have at least soooome participants in the cells. However, attr is so severely skewed that we get only around 50 participants who answer non-zero - that will likely produce problems with the LCA. 
+
+
+m_factor <- lapply(data_males %>% select(-CASE, -attr),cut_number, n=4) %>% as.tibble()
+m_factor <- lapply(m_factor, ordered) %>% as.tibble()
+data_males <- cbind(data_males$CASE, m_factor, data_males$attr) %>% mutate(attr  = case_when(`data_males$attr` == 0 ~ "no attraction", `data_males$attr` > 0 ~ "some attraction"))
+data_males <- data_males %>% select(-`data_males$attr`)
+data_males <- data_males %>% mutate(attr = attr %>% ordered())
+colnames(data_males)[1]<-"CASE"
+
+rm(m_factor)
+
+# I redo the recoding for the female data. Be reminded that the cuts for the quantiles are likely different between males and females - Keep that in mind while interpreting the LCAs!
+
+f_factor <- lapply(data_females %>% select(-CASE, -attr, -CSBD, -PPCS_6),cut_number, n=4) %>% as.tibble()
+f_factor <- lapply(f_factor, ordered) %>% as.tibble()
+data_females <- cbind(data_females$CASE, f_factor, data_females$attr) %>% mutate(attr  = case_when(`data_females$attr` == 0 ~ "no attraction", `data_females$attr` > 0 ~ "some attraction"), CSBD = data_females$CSBD, PPCS_6 = data_females$PPCS_6)
+data_females <- data_females %>% select(-`data_females$attr`)
+data_females <- data_females %>% mutate(attr = attr %>% ordered())
+colnames(data_females)[1]<-"CASE"
+
+#Dichotomise CSBD, PPCS_6 because they have not enough cases per bin to cluster it in quantiles. The names of the factor levels show where the cut was set.
+
+data_females <- data_females %>% mutate(PPCS_6 = cut_number(data_females$PPCS_6, n=2) %>% ordered(), CSBD = cut_number(data_females$CSBD, n=2) %>% ordered())
+
+```
+
+
+
+```{r descriptives}
+
+#We use tidySEM for the specification of the LCA models. We begin with unconditional LCA models. 
+
+desc_m <- tidySEM::descriptives(data_males %>% select(-CASE))
+desc_m <- desc_m %>% select(name, type, n, missing, unique, mode, mode_value, v)
+
+desc_f <- tidySEM::descriptives(data_females %>% select(-CASE))
+desc_f <- desc_f %>% select(name, type, n, missing, unique, mode, mode_value, v)
+
+
+#PLot the data. Use greom_bar and facet_wrap to create historams. The data frame needs also reshaping.
 
 
 
 ```
+
+
+```{r LCA_males}
+#We start with constructing an LCA model for the people who reported a male gender identity. The consensus was to expect up to 7 clusters, because of the seven initial motivations and the original answering categories in the questionnaire. Very likely 7 clusters are way to many to reliably estimate parameters but we will see.
+
+lca_models_m <- mx_lca(data=data_males %>% select(-CASE), classes=1:7)
+
+#If non-convergence. Use mxTryHardOrdinal()
+
+lca_fit <- table_fit(lca_models_m) %>% select(Name, LL, n, Parameters, BIC, Entropy, prob_min, n_min, np_ratio, np_local)
+
+#Entropy coeffient shows that the classes are not well separated. https://doi.org/10.1177/009579842093093 recommend a value of at least .8 and state that an LCA with an entropy coefficient lower than .6 will be har to publish.
+
+LR_lca_m <- lr_lmr(lca_models_m)
+
+lca_final_model_m <- lca_models_m[[3]] #x is the class enumaration of choice
+
+#Check tge 
+table_LCA_m <- table_results(lca_final_model_m)
+
+
+prob_table_LCA_m <- table_prob(lca_final_model_m)
+reshape(prob_table_LCA_m, direction="wide", v.names="Probability", timevar="group", idvar = c("Variable", "Category")) %>% view()
+
+
+plot_prob(lca_final_model_m)
+
+
+#class proportions
+class_prob_lca_m <- class_prob(lca_final_model_m, "sum.posterior")
+
+```
+
+
+```{r LCA_females}
+
+#We carry on with a LCA on the female sample. We stay with a maximum of seven clusters.
+
+lca_models_f <- mx_lca(data=data_females %>% select(-CASE), classes=1:7)
+
+#If non-convergence. Use mxTryHardOrdinal()
+
+lca_fit_f <- table_fit(lca_models_f) %>% select(Name, LL, n, Parameters, BIC, Entropy, prob_min, n_min, np_ratio, np_local)
+
+#Entropy coeffient shows that the classes are not well separated. https://doi.org/10.1177/009579842093093 recommend a value of at least .8 and state that an LCA with an entropy coefficient lower than .6 will be har to publish.
+
+LR_lca_f <- lr_lmr(lca_models_f)
+
+lca_final_model_f <- lca_models_f[[3]] #x is the class enumaration of choice
+
+#Check tge 
+table_LCA_f <- table_results(lca_final_model_f)
+
+
+prob_table_LCA_f <- table_prob(lca_final_model_f)
+reshape(prob_table_LCA_f, direction="wide", v.names="Probability", timevar="group", idvar = c("Variable", "Category")) %>% view()
+
+
+plot_prob(lca_final_model_f)
+
+
+#class proportions
+class_prob_lca_f <- class_prob(lca_final_model_m, "sum.posterior")
+
+
+```
+
+
 
