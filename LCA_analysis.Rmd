@@ -3,13 +3,14 @@ title: "LCA_analysis"
 author: "Frederic Gnielka"
 date: "2023-12-20"
 output: html_document
+bibliography: bibliography.bib
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-```{r library}
+```{r library, echo=FALSE}
 set.seed(42)
 
 #Declare vector of required packages
@@ -22,10 +23,23 @@ check_required_packages(packages)
 #load required packages
 lapply(packages, require, character.only=T)
 
+
+#######ATTENTION: 
+#At this point I load a presaved RData variables in which the  environment is saved. That makes the code less reproduceable, but removing the eval=FALSE specifications in all code blocks will make that possible. 
+
+load(".RData")
+
+
+options(scipen = 999)
 ```
+We begin by loading the required dataset into R. That file is: "dataE_2112.sav".
+The Variables selected are: gender, CASE, sexdrive2, CSBD, PPCS_6, meffort, socialanx, lon, mvalue, attr
 
+The dataset is split into one dataframe for men and one for women, which are analysed seperately, after the initial approach, investigating both genders combined with an LPA and OPTICS did not result in an interpretable solution.
 
-```{r data}
+The Analysis performed is exploratory.
+
+```{r data, include=FALSE}
 #We are loading the gender encoding in the analysis script.
 #Apparently a 2 represents a male. We want to only grab males. 
 data_males <- haven::read_spss("./data/data raw/dataE_2112.sav") %>% dplyr::select(gender, CASE, sexdrive2, CSBD, PPCS_6, meffort, socialanx, lon, mvalue, attr) %>% filter(gender == 2) %>% dplyr::select(-gender)
@@ -36,7 +50,11 @@ data_females <- haven::read_spss("./data/data raw/dataE_2112.sav") %>% dplyr::se
 
 ```
 
-```{r factor}
+
+The distributions of some of the variables are very skewed, and some categories are only inhabited by a few participants. Therefore, we decided to split the scales into quantiles, and (when not sufficient data was available to split the data into quantiles) dummy coded variables. 
+
+
+```{r factor, eval=FALSE, echo=FALSE}
 #I factorise and bin the variables in the dataframe, such that I get hopefully enough cases per bin to estimate parameters in the LCA. Attr is dichotomised, so that we have at least soooome participants in the cells. However, attr is so severely skewed that we get only around 50 participants who answer non-zero - that will likely produce problems with the LCA. 
 
 
@@ -66,7 +84,7 @@ data_females <- data_females %>% mutate(PPCS_6 = cut_number(data_females$PPCS_6,
 
 
 
-```{r descriptives}
+```{r descriptives, eval=FALSE, echo=FALSE}
 
 #We use tidySEM for the specification of the LCA models. We begin with unconditional LCA models. 
 
@@ -84,14 +102,38 @@ desc_f <- desc_f %>% select(name, type, n, missing, unique, mode, mode_value, v)
 ```
 
 
-```{r LCA_males}
+Let's show some descriptives. Modus refers here to how many participants share this modal value. mode_value gives the actual modal value. v is a measure of variability for categorical variables and refers to the probability that two randomly drawn participants belong to different categories.
+
+
+First we show males:
+```{r show_desc_m, echo=FALSE}
+desc_m
+```
+There are no missings, which is nice. We can observe with most variables that the quantile binning worked well (according to the v-values), except for the attraction to children variable. Even dichotomised too few few people report anything other than that they are completely unattracted to children. 
+
+Then females: 
+```{r show_desc_f, echo=FALSE}
+desc_f
+```
+
+# Performing LCA
+
+We can put ourselves to doing the actual LCA now. We begin for the dataset comprised of males.
+
+The steps include:
+1. class enumeration
+2. model evaluation
+3. model interpretation
+
+##Males
+```{r LCA_males, eval=FALSE}
 #We start with constructing an LCA model for the people who reported a male gender identity. The consensus was to expect up to 7 clusters, because of the seven initial motivations and the original answering categories in the questionnaire. Very likely 7 clusters are way to many to reliably estimate parameters but we will see.
 
 lca_models_m <- mx_lca(data=data_males %>% select(-CASE), classes=1:7)
 
 #If non-convergence. Use mxTryHardOrdinal()
 
-lca_fit <- table_fit(lca_models_m) %>% select(Name, LL, n, Parameters, BIC, Entropy, prob_min, n_min, np_ratio, np_local)
+lca_fit <- table_fit(lca_models_m) %>% select(Name, LL, n, Parameters, BIC, Entropy, prob_min, prob_max, n_min, np_ratio, np_local)
 
 #Entropy coeffient shows that the classes are not well separated. https://doi.org/10.1177/009579842093093 recommend a value of at least .8 and state that an LCA with an entropy coefficient lower than .6 will be har to publish.
 
@@ -102,9 +144,9 @@ lca_final_model_m <- lca_models_m[[3]] #x is the class enumaration of choice
 #Check tge 
 table_LCA_m <- table_results(lca_final_model_m)
 
-
+#conditional item probabilities
 prob_table_LCA_m <- table_prob(lca_final_model_m)
-reshape(prob_table_LCA_m, direction="wide", v.names="Probability", timevar="group", idvar = c("Variable", "Category")) %>% view()
+prob_table_LCA_m <- reshape(prob_table_LCA_m, direction="wide", v.names="Probability", timevar="group", idvar = c("Variable", "Category"))
 
 
 plot_prob(lca_final_model_m)
@@ -116,7 +158,65 @@ class_prob_lca_m <- class_prob(lca_final_model_m, "sum.posterior")
 ```
 
 
-```{r LCA_females}
+
+We see that by the BIC criterion which is presented as the most reliable measure for class enumeration in LCA according to simulation studies [@van_lissa_recommended_2023; @masyn_latent_2013]. 
+
+```{r scree_plot}
+plot(lca_fit)
+```
+
+There appears to be a minimum being reached at three classes.
+
+I also tried to use Likelihood Ratio Tests for class enumeration as they are often used together with Fit Índices as the BIC, but encountered some problems. While the Bootstrapped Likelihood Ratio Test (which is sometimes recommended based on simulation studies) revealed itself to be too computational expensive for my home computer (with multiple days running time and no sign of the algorithm stopping), the Lo-Mendell-Rubin_LRT returned a warning and only NA-values [@sinha_practitioners_2021; @van_lissa_recommended_2023]. The exact reason why this is the case is still unclear. It might however be, that Vuong's distinguishability test that is performed in the LMR-LRT procedure, revealed that all models are actually indistinguishable [@merkle_testing_2016]. A solution with no clusters was also what was indicated by the OPTICS algorithm. I still need to verify the reason for that NA-output, though. 
+However, @van_lissa_recommended_2023 advice to be caucious using LRTs, especially in exploratory LCA, because the conditions underlying the LRT are likely not met and the test results may be flawed or as is the case with BLRTs, they depend heavily on the model specifications - and should better be used in confirmatory settings (see also @jeffries_note_2003 ).
+
+First we inspect the fit_table to assess how well the models with different numbers of classes perform in that dataset. We should always keep in mind that the fit indices give us only in-sample fit and should therefore be taken with a grain of salt. 
+
+```{r show_fit_table_m, echo=FALSE}
+
+lca_fit
+
+```
+
+Inverse entropy is a measure of high class separability. Values close to 1 are desirable. @weller_latent_2020 refer to a cut_off value of at least .8, and comment that although no agreed-upon cut-off value for entropy exists, one will have problems publishing a solution with entropy values as low as .6. @nylund-gibson_ten_2018 also refer to a cut-off value of .8, but cite Clark & Muthen, 2009. Class separability is often inversely related to model fit, and is not used in model selection. However, it should still be a relevant criterion for model evaluation, as it affects assessment of the usefulness of the model (what use are classes that cannot be well discerned?) [@masyn_latent_2013]. Values around our values are associated with a misclassification rate of around 20% for the assignment to the correct class [@wang2017performance]. This insecurity can project into further analyses with the latent classes, so that higher inverse entropy values lead to higher replication of correct effects of class membership on distal outcomes [@clark2009relating]. In our case the problematic values for class separability might relate to differences between how well the different scales can distinguish between the classes in the sample. That warrants a closer inspection of the posterior item probabilities.
+
+When we look at the other model evaluation parameters except from the BIC, we discover some difficulties. When we look at entropy, prob_min and prob_max.
+
+Prob_min and Prob_max gives the range of the posterior classification probabilities. These values should be high.
+
+
+```{r avePP_m}
+class_prob(lca_final_model_m, type="avg.mostlikely")
+```
+
+The average posterior probabilities by most likely class membership tell how high on average the posterior probabilities are for all individuals whose highest posterior probability points to a specific class. The off-diagonal can be viewed as a crude measure of misclassification error. 
+@masyn_latent_2013 suggest a .7 as a cut-off on the diagonal of the average posterior probabilities by most likely class membership matrix. @nylund-gibson_ten_2018 recommend .7 as well via Nagin, 2005. However, @van_lissa_recommended_2023 remark that it is still necessary to extensively interpret the resulting matrix, no matter what cut-off values suggest. To that end, I would maybe recommend looking at the whole distributions of average posterior probabilities by most likely class instead of their first moment.
+
+
+Let's display conditional item probabilities for the three class model for men. The table can help identify which items are useful for the serparation of the classes and the probabilities themselves are a measure for class homogeneity. 
+
+```{r prob_table_m}
+prob_table_LCA_m
+```
+
+Class homogeneity and class separation might be explored by the item probabilities conditioned on class membership (conditional item probabilities) - in our case these are rather memberships to quantiles of the item scales than the usual dummy coded items. Probabilities higher than .7 and smaller than .3 show homogeneity within the classes. Odds ratios between two classes bigger than 5 and smaller than .2 indicate high class separation for an item - or in our case an item level[@nylund-gibson_ten_2018]. Odds ratios would still have to be computed. 
+
+
+np_ratio tells us how many observations on average are accessible for each parameter estimation [@van_lissa_recommended_2023]. 
+np_local refers to the number of cases per parameter in the smallest class and indicates how much data we have for each parameter. 
+
+
+
+The conditional item probabilities can also be inspected in a plot. In the end they are what is used in the interpretation of the results and labelling of classes.
+```{r prob_plot_m}
+plot_prob(lca_final_model_m)
+```
+
+## LCA females
+
+Now we redo the analysis with the subset of female participants. The cutoff values stay obviously the same. It should be noted that two more variables needed to be dichotomized in the female sample, because they were als oto skewed to form quantiles. Those were PPCS and CSBD.
+
+```{r LCA_females, eval=FALSE}
 
 #We carry on with a LCA on the female sample. We stay with a maximum of seven clusters.
 
@@ -124,7 +224,7 @@ lca_models_f <- mx_lca(data=data_females %>% select(-CASE), classes=1:7)
 
 #If non-convergence. Use mxTryHardOrdinal()
 
-lca_fit_f <- table_fit(lca_models_f) %>% select(Name, LL, n, Parameters, BIC, Entropy, prob_min, n_min, np_ratio, np_local)
+lca_fit_f <- table_fit(lca_models_f) %>% select(Name, LL, n, Parameters, BIC, Entropy, prob_min, prob_max, n_min, np_ratio, np_local)
 
 #Entropy coeffient shows that the classes are not well separated. https://doi.org/10.1177/009579842093093 recommend a value of at least .8 and state that an LCA with an entropy coefficient lower than .6 will be har to publish.
 
@@ -137,7 +237,7 @@ table_LCA_f <- table_results(lca_final_model_f)
 
 
 prob_table_LCA_f <- table_prob(lca_final_model_f)
-reshape(prob_table_LCA_f, direction="wide", v.names="Probability", timevar="group", idvar = c("Variable", "Category")) %>% view()
+prob_table_LCA_f <- reshape(prob_table_LCA_f, direction="wide", v.names="Probability", timevar="group", idvar = c("Variable", "Category"))
 
 
 plot_prob(lca_final_model_f)
@@ -150,4 +250,28 @@ class_prob_lca_f <- class_prob(lca_final_model_m, "sum.posterior")
 ```
 
 
+### Scree Plot Females
+```{r scree_plot_f, echo=FALSE}
+plot(lca_fit_f)
+```
 
+### Fit Table Females
+```{r showfittable_f, echo=FALSE}
+lca_fit_f
+```
+
+### AvePP by most likely class for females
+```{r avePP_f, echo=FALSE}
+
+class_prob(lca_final_model_f, type="avg.mostlikely")
+```
+
+### Conditional Item Probabilities for females
+```{r prob_table_f, echo=FALSE}
+prob_table_LCA_f
+```
+
+
+```{r prob_plot_f, echo=FALSE}
+plot_prob(lca_final_model_f)
+```
