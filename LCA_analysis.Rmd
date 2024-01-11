@@ -276,6 +276,9 @@ table_LCA_f <- table_results(lca_final_model_f)
 
 prob_table_LCA_f <- table_prob(lca_final_model_f)
 prob_table_LCA_f <- reshape(prob_table_LCA_f, direction="wide", v.names="Probability", timevar="group", idvar = c("Variable", "Category"))
+
+#class proportions
+class_prob_lca_f <- class_prob(lca_final_model_f, "sum.posterior")
 ```
 
 ### Scree Plot Females
@@ -286,7 +289,6 @@ plot(lca_fit_f)
 ### Class Proportions Females
 ```{r class_proportion_f, echo=F}
 #class proportions
-class_prob_lca_f <- class_prob(lca_final_model_f, "sum.posterior")
 class_prob_lca_f
 ```
 
