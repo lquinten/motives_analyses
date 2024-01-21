@@ -309,5 +309,45 @@ prob_table_LCA_f
 plot_prob(lca_final_model_f)
 ```
 
+```{r BCH_dataframe}
+
+#Load precoded functions
+source("./functions/D_matrix_modal.R")
+source("./functions/modal_weights.R")
+
+#Create a dataframe with modal weights
+
+#First extract posterior probabilities for class assignment and most likely class membership
+posteriors <- class_prob(lca_final_model_m, type="individual")$individual %>% as_tibble()
+
+#Compute the inverse D matrix as in Bakk et al. (2013)
+inverse_D <- solve(D_matrix_modal(posteriors))
+
+#Extract a vector with the most likely class memberships
+modal_assignments <- posteriors %>% select(predicted)
+
+#Use the modal_weights function to create modal weights from the inverse_D matrix and combine the results in a tibble with the posterior probabilities of class membership and the most likely class membership.
+BCH_expanded_dataframe <- tibble(posteriors, modal_weights(modal_assignments, inverse_D) %>% as_tibble())
+colnames(BCH_expanded_dataframe) <- c("postprob_class_1", "postprob_class_2", "postprob_class_3", "modal_class", "modal_weight_1", "modal_weight_2", "modal_weight_3")
+
+#Tidy up behind us
+rm(modal_assignments, inverse_D, posteriors)
+
+#Attach the CASE variable to our weighted dataframe. 
+BCH_expanded_dataframe <- BCH_expanded_dataframe %>% mutate(CASE = data_males$CASE)
+
+#We convert the expanded dataframe from wide in long format, so that we can use it as an input for our further analyses. According to Bakk et al. (2016), each participant enters the analysis nclass times, each time differently weighted according to his or her class assignment. 
+
+BCH_expanded_dataframe <- BCH_expanded_dataframe %>% pivot_longer(cols=starts_with("modal_weight"), values_to = "modal_weight", names_to=NULL)
+
+#Create a variable that encodes the assumed class assignments for the BCH analysis
+BCH_expanded_dataframe <- BCH_expanded_dataframe %>% mutate(predicted_class = vctrs::vec_rep(1:3, nrow(data_males)))
+
+#Create dummy variables from this variable
+BCH_expanded_dataframe <- fastDummies::dummy_cols(BCH_expanded_dataframe, select_columns = "predicted_class")
+
+```
+
+
 
 *References*
