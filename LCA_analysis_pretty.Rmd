@@ -42,11 +42,11 @@ data_females <- haven::read_spss("./data/data raw/dataE_2112.sav") %>% dplyr::se
 #We refrain from renaming the variables to make interpretation across analyses easier. 
 ```
 
-After the initial approach (i.e. investigating both genders at once with an LPA and OPTICS) did not result in any interpretable solutions, the data set was split into participants who identified as male and those who identified as female, which were then analysed separately. Because of the highly skewed distributions of some of the variables (see Figures X and Y), we decided to split the scales into quantiles (see Figures X and Y), and, when sufficient data to split the data into quantiles was not available, to dichotomise them. This was the case for sexual interest in children with both male and female participants (where 97% of the participants completely denied sexual interest in children, i.e., selected 0 on all three items), as well as compulsive sexual behaviour and problematic porn consumption with the female participants. Due to the different answering behaviour in the male and the female sub-samples, the quantiles necessarily vary.
+After the initial approach (i.e. investigating both genders at once with an LPA and OPTICS) did not result in any interpretable solutions, only participants who identified as male were analysed from here on (for the analyses with the female participants, see the supplemental material). Because of the highly skewed distributions of some of the variables, we decided to split the scales into quantiles (see Figure X), and, when sufficient data to split the data into quantiles was not available, to dichotomise them. This was the case for sexual interest in children, where 97% of the participants completely denied sexual interest in children (i.e., selected 0 on all three items).
 
 __Figure X__
 
-*Scale Distributions With Quantiles for Male Participants*
+*Scale Distributions With Quantiles*
 ```{r violin plots, fig.width=12}
 #create long data frame for plotting, including only the relevant variables
 plotd_m <- data_males %>% select(CASE, sexdrive2, CSBD, PPCS_6, meffort, socialanx, lon, mvalue, attr) %>% pivot_longer(cols=sexdrive2:attr, names_to="var", values_to="score")
@@ -77,6 +77,7 @@ g2 <- ggplot(plotd_m %>% filter(var=="attr"), aes(x=score)) +
 ggarrange(g1, g2, ncol=2, nrow=1, widths=c(1.6, 1))
 ```
 
+<!--
 __Figure Y__
 
 *Scale Distributions With Quantiles for Female Participants*
@@ -119,8 +120,9 @@ rm(g2)
 rm(g3)
 rm(g4)
 ```
+-->
 
-Descriptives for the newly categorised scales are shwon in Table X.
+Descriptives for the newly categorised scales are shown in Table X.
 ```{r factor, eval=F}
 #We factorise and bin the variables in the data frame, such that we hopefully get enough cases per bin to estimate parameters in the LCA. Attr is dichotomised, so that we have at least some participants in the cells. However, attr is so severely skewed that we get only around 50 participants who answer non-zero - that will likely produce problems with the LCA. 
 m_factor <- lapply(data_males %>% select(-CASE, -attr),cut_number, n=4) %>% as.tibble()
@@ -160,22 +162,28 @@ __Table X__
 
 *Descriptives for the Newly Categorised Scales*
 ```{r descriptives}
+# #Create vector with rownames
+# Variable <- c("Sexual interest in children", "CSBD-7", "LON", "Mating effort", "Low embodied capital", "PPCS-6", "Sex drive", "Social anxiety")
+# #Merge male and female descriptives tables
+# desc <- merge(desc_m, desc_f, by="name")
+# #Bind Variable column to the beginning
+# desc <- cbind(Variable, desc)
+
 #Create vector with rownames
-Variable <- c("Sexual interest in children", "CSBD-7", "LON", "Mating effort", "Low embodied capital", "PPCS-6", "Sex drive", "Social anxiety")
-#Merge male and female descriptives tables
-desc <- merge(desc_m, desc_f, by="name")
-#Bind Variable column to the begninning
-desc <- cbind(Variable, desc)
+Scale <- c("Sexual interest in children", "CSBD-7", "LON", "Mating effort", "Low embodied capital", "PPCS-6", "Sex drive", "Social anxiety")
+#Bind Variable column to the beginning
+desc_m <- cbind(Scale, desc_m[, -1])
 
 #Pretty output
-flextable(desc, col_keys=c("Variable", "n.x", "n.y", "unique.x", "unique.y", "mode.x", "mode.y", "mode_value.x", "mode_value.y", "v.x", "v.y")) %>%
-  set_header_labels(Variable="Scale", n.x='Male', n.y="Female", unique.x="Male", unique.y="Female", mode.x="Male", mode.y="Female", mode_value.x="Male", mode_value.y="Female", v.x="Male", v.y ="Female") %>%
-  add_header_row(values=c("Variable", "N", "Categories", "Mode", "Modal value", "v"), colwidths = c(1, 2, 2, 2, 2, 2)) %>%
+flextable(desc_m %>% select(-"type", -"missing")) %>%
+  set_formatter(v=function(x) format(round(x, 2), nsmall=2)) %>%
+  set_header_labels(n="N", unique="Categories", mode="Mode", mode_value="Modal value", v="v") %>%
   theme_booktabs() %>%
   autofit()
 ```
-*Note.* Mode refers to how many participants share this modal value. v is a measure of variability for categorical variables and refers to the probability that two randomly drawn participants belong to different categories.
+*Note.* Mode refers to how many participants share this modal value. v is a measure of variability for categorical variables and refers to the probability that two randomly drawn participants belong to different categories. Round parentheses are exclusive boundaries, square brackets are inclusive boundaries.
 
+<!--
 First we show males:
 ```{r show_desc_m}
 desc_m
@@ -187,6 +195,7 @@ Then females:
 ```{r show_desc_f}
 desc_f
 ```
+
 
 # Performing LCA
 
@@ -223,8 +232,13 @@ prob_table_LCA_m <- reshape(prob_table_LCA_m, direction="wide", v.names="Probabi
 #class proportions
 class_prob_lca_m <- class_prob(lca_final_model_m, "sum.posterior")
 ```
+-->
 
-We look at the BIC criterion, which is presented as the most reliable measure for class enumeration in LCA according to simulation studies [@van_lissa_recommended_2023; @masyn_latent_2013]. 
+For class enumeration, the Bayesian information criterion (BIC) is, according to simulation studies, the most reliable measure [@van_lissa_recommended_2023; @masyn_latent_2013]. It reached a minimum at three classes (see Figure Y). Following Van Lissa et al. (2023), a likelihood ratio test (LRT) was not calculated to avoid biased results due to unmet conditions. Instead, fit indices were inspected to assess how well models with 1-7 classes perform in that data set.
+
+__Figure Y__
+
+*BIC Values for Different Numbers of Classes*
 ```{r scree_plot, echo=F}
 plot(lca_fit)
 ```
@@ -268,6 +282,7 @@ The conditional item probabilities can also be inspected in a plot. In the end t
 plot_prob(lca_final_model_m)
 ```
 
+<!--
 ## Females
 
 Now we redo the analysis with the subset of female participants. The cutoff values for fit indices obviously stay the same. It should be noted that two more variables needed to be dichotomised in the female sample, because they were also to skewed to form quantiles. Those were PPCS and CSBD.
@@ -325,6 +340,6 @@ prob_table_LCA_f
 ```{r prob_plot_f, echo=FALSE, fig.width=12}
 plot_prob(lca_final_model_f)
 ```
-
+-->
 
 *References*
