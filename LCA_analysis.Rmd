@@ -451,7 +451,7 @@ for (i in 1:17){
 ##Do Flic for the models in the list with weights fixed to 0.01
 log_regs_min <- list()
 for (i in 1:17){
-  log_regs_min[[i]] <- logistf::logistf(formula=models[i], data = BCH_expanded_dataframe, model=TRUE, weights=BCH_expanded_dataframe$modal_weight_3) %>% flic()
+  log_regs_min[[i]] <- logistf::logistf(formula=models[i], data = BCH_expanded_dataframe,control = logistf.control(fit="IRLS"), model=TRUE, weights=BCH_expanded_dataframe$modal_weight_3) %>% flic()
 }
 
 #Combine the results in a dataframe
@@ -465,8 +465,14 @@ lr_2 = lapply(BCH_results$models, logistftest, test=2, weights=BCH_expanded_data
 lr_3 = lapply(BCH_results$models, logistftest, test=3, weights=BCH_expanded_dataframe$modal_weight_2),
 lr_total = lapply(BCH_results$models, logistftest, weights=BCH_expanded_dataframe$modal_weight_2))
 
+BCH_results <- BCH_results %>% mutate(
+lr_1_0.01 = lapply(BCH_results$models, logistftest, test=1, weights=BCH_expanded_dataframe$modal_weight_3,control = logistf.control(fit="IRLS")),
+lr_2_0.01 = lapply(BCH_results$models, logistftest, test=2, weights=BCH_expanded_dataframe$modal_weight_3,control = logistf.control(fit="IRLS")),
+lr_3_0.01 = lapply(BCH_results$models, logistftest, test=3, weights=BCH_expanded_dataframe$modal_weight_3,control = logistf.control(fit="IRLS")),
+lr_total_0.01 = lapply(BCH_results$models, logistftest, weights=BCH_expanded_dataframe$modal_weight_3,control = logistf.control(fit="IRLS")))
+
 #Save output to RDS.
-#BCH_results %>% saveRDS(file="./out/BCH_results.RDS")
+BCH_results %>% saveRDS(file="./out/BCH_results.RDS")
 ```
 
 
