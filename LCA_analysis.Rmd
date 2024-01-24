@@ -71,7 +71,7 @@ g1 <- ggplot(plotd_m %>% filter(var!="attr"), aes(x=as.factor(var), y=score, fil
   geom_errorbar(data=quant_m, aes(x=as.factor(var), ymin=value, ymax=value, linetype="quantiles"), inherit.aes=F, linewidth=.5, width=.3, position=position_nudge(x=.15)) +
   scale_linetype_manual(values="solid") +
   guides(linetype=guide_legend(""), fill="none") +
-  scale_x_discrete(labels=c("CSBD"="CSBD-7", "lon"="LON", "meffort"="Mating effort", "mvalue"="Low embodied capital", "PPCS_6"="PPCS-6", "sexdrive2"="Sex drive", "socialanx"="Social anxiety")) +
+  scale_x_discrete(labels=c("CSBD"="CSBD-7", "lon"="LON", "meffort"="Mating effort", "mvalue"="Embodied capital", "PPCS_6"="PPCS-6", "sexdrive2"="Sex drive", "socialanx"="Social anxiety")) +
   labs(x="", y="value") +
   theme_classic() +
   theme(axis.text.x=element_text(angle=45, hjust=1, size=10))
@@ -175,7 +175,7 @@ __Table A__
 # desc <- cbind(Variable, desc)
 
 #Create vector with rownames
-Scale <- c("Sexual interest in children", "CSBD-7", "LON", "Mating effort", "Low embodied capital", "PPCS-6", "Sex drive", "Social anxiety")
+Scale <- c("Sexual interest in children", "CSBD-7", "LON", "Mating effort", "Embodied capital", "PPCS-6", "Sex drive", "Social anxiety")
 #Bind Variable column to the beginning
 desc_m <- cbind(Scale, desc_m[, -1])
 
@@ -298,7 +298,7 @@ __Table C__
 *Conditional Item Probabilities for the Three-Class Model*
 ```{r prob_table_m, echo=F}
 #Make table presentable
-prob_table_LCA_m$Variable <- c(rep(c("Sex drive", "CSBD-7", "PPCS-6", "Mating effort", "Social anxiety", "LON", "Low embodied capital", "Sexual interest in children"), each=4))[1:nrow(prob_table_LCA_m)]
+prob_table_LCA_m$Variable <- c(rep(c("Sex drive", "CSBD-7", "PPCS-6", "Mating effort", "Social anxiety", "LON", "Embodied capital", "Sexual interest in children"), each=4))[1:nrow(prob_table_LCA_m)]
 #Pretty display
 flextable(prob_table_LCA_m) %>%
   set_formatter(Probability.class1=function(x) format(round(x, 2), nsmall=2),
@@ -319,7 +319,7 @@ __Figure C__
 ```{r prob_plot_m, echo=F, fig.width=12}
 plot_prob(lca_final_model_m) +
   scale_fill_grey(start = 0.9, end = 0.5, aesthetics = "fill") +
-  scale_x_discrete(labels=c("attr"="Sexual interest in children", "CSBD"="CSBD-7", "lon"="LON", "meffort"="Mating effort", "mvalue"="Low embodied capital", "PPCS_6"="PPCS-6", "sexdrive2"="Sex drive", "socialanx"="Social anxiety")) +
+  scale_x_discrete(labels=c("attr"="Sexual interest in children", "CSBD"="CSBD-7", "lon"="LON", "meffort"="Mating effort", "mvalue"="Embodied capital", "PPCS_6"="PPCS-6", "sexdrive2"="Sex drive", "socialanx"="Social anxiety")) +
   labs(x="") +
   theme_classic() +
   theme(axis.text.x=element_text(angle=45, hjust=1, size=10))
@@ -552,6 +552,12 @@ BCH_results_parameters <-tibble(outcomes = BCH_results$outcomes %>% sort(),
 ```
 
 <!--Each model (either with negative weights = 0 or negative weights = 0.01) can be obtained in the BCH_results tibble. The results from likelihood ratio tests are found in the columns that begin with "lr_". 1 means that the intercept is tested against the full model, 2 means that predicted class 1 is tested against the full model, 3 means that predicted class 2 is tested against the full model, and total means that the complete model was tested against an intercept only model. -->Predicted class 3 was chosen as the reference class because it contains people who have the highest probabilities of being in high quantiles of the motivator scales. It can therefore be considered a "high risk"-class. The regression weights can be interpreted as the difference in logits (log-odds of the probability to not answer 0 on the proclivity items) between the high risk class and the other classes. In other words, the significance of a regression weight tells us that there is a significant difference between the high risk class and the other classes when it comes to proclivity. 
+
+```{r}
+BCH_results_parameters %>% select(starts_with("b") & ends_with("0.01"), starts_with("p") & ends_with("0.01"))
+
+#transform into OR with exp()
+```
 
 
 # __References__
