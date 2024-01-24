@@ -483,8 +483,72 @@ lr_2_0.01 = lapply(BCH_results$models, logistftest, test=2, weights=BCH_expanded
 lr_3_0.01 = lapply(BCH_results$models, logistftest, test=3, weights=BCH_expanded_dataframe$modal_weight_3,control = logistf.control(fit="IRLS")),
 lr_total_0.01 = lapply(BCH_results$models, logistftest, weights=BCH_expanded_dataframe$modal_weight_3,control = logistf.control(fit="IRLS")))
 
+#We extract p-values from the likelihood ratio tests. 
+
+BCH_results <- BCH_results %>% mutate(
+  p_1=lapply(BCH_results$lr_1, function(x){x$prob}) %>% unlist(),
+  p2=lapply(BCH_results$lr_2, function(x){x$prob}) %>% unlist(),
+  p3=lapply(BCH_results$lr_3, function(x){x$prob}) %>% unlist(),
+  p_1_0.01=lapply(BCH_results$lr_1_0.01, function(x){x$prob}) %>% unlist(),
+  p_2_0.01=lapply(BCH_results$lr_2_0.01, function(x){x$prob}) %>% unlist(),
+  p_3_0.01=lapply(BCH_results$lr_3_0.01, function(x){x$prob}) %>% unlist(),
+)
+
+#Order BCH_results
+BCH_results <- BCH_results[order(BCH_results$outcomes),]
+
+#Add parameter estimates
+#How to index the results_parameters table:
+#All regression weights start with "b",
+#All model output from the 0.01 weighted regression ends with "_0.01"
+#All lower confidence interval limits begin with ci_l
+#All upper confidence interval limits begin with ci_r
+#All lr-test p-values start with p_lr.
+#Use tidyverse select functions 
+
+BCH_results_parameters <-tibble(outcomes = BCH_results$outcomes %>% sort(), 
+                                b_intercept = lapply(BCH_results$models, function(x){x$coefficients[1]}) %>% unlist(),
+                                b_predicted_class_1 = lapply(BCH_results$models, function(x){x$coefficients[2]}) %>% unlist(),
+                                b_predicted_class_2 =lapply(BCH_results$models, function(x){x$coefficients[3]}) %>% unlist(),
+                                b_intercept_0.01 = lapply(BCH_results$models_0.01_weights, function(x){x$coefficients[1]}) %>%
+                                  unlist(),
+                                b_predicted_class_1_0.01 = lapply(BCH_results$models_0.01_weights, function(x){x$coefficients[2]}) %>%
+                                  unlist(),
+                                b_predicted_class_2_0.01 = lapply(BCH_results$models_0.01_weights, function(x){x$coefficients[3]}) %>%
+                                  unlist(),
+                                ci_l_intercept = lapply(BCH_results$models, function(x){x$ci.lower[1]}) %>% unlist(),
+                                ci_l_predicted_class_1 =lapply(BCH_results$models, function(x){x$ci.lower[2]}) %>% unlist(),
+                                ci_l_predicted_class_2 =lapply(BCH_results$models, function(x){x$ci.lower[3]}) %>% unlist(),
+                                ci_l_intercept_0.01= lapply(BCH_results$models_0.01_weights, function(x){x$ci.lower[1]}) %>% unlist(),
+                                ci_l_predicted_class_1_0.01=lapply(BCH_results$models_0.01_weights, function(x){x$ci.lower[2]}) %>%
+                                  unlist(),
+                                ci_l_predicted_class_2_0.01=lapply(BCH_results$models_0.01_weights, function(x){x$ci.lower[3]}) %>%
+                                  unlist(),
+                                ci_r_intercept =lapply(BCH_results$models, function(x){x$ci.upper[1]}) %>% unlist(),
+                                ci_r_predicted_class_1=lapply(BCH_results$models, function(x){x$ci.upper[2]}) %>% unlist(),
+                                ci_r_predicted_class_2=lapply(BCH_results$models, function(x){x$ci.upper[3]}) %>% unlist(),
+                                ci_r_intercept_0.01 = lapply(BCH_results$models_0.01_weights, function(x){x$ci.upper[1]}) %>% unlist(),
+                                ci_r_predicted_class_1_0.01 = lapply(BCH_results$models_0.01_weights, function(x){x$ci.upper[2]}) %>%
+                                  unlist(),
+                                ci_r_predicted_class_2_0.01  = lapply(BCH_results$models_0.01_weights, function(x){x$ci.upper[3]}) %>%
+                                  unlist(),
+                                p_lr_intercept = lapply(BCH_results$lr_1, function(x){x$prob}) %>% unlist(),
+                                p_lr_predicted_class_1 = lapply(BCH_results$lr_2, function(x){x$prob}) %>% unlist(),
+                                p_lr_predicted_class_2 = lapply(BCH_results$lr_3, function(x){x$prob}) %>% unlist(),
+                                p_lr_intercept_0.01 = lapply(BCH_results$lr_1_0.01, function(x){x$prob}) %>% unlist(),
+                                p_lr_predicted_class_1_0.01 = lapply(BCH_results$lr_2_0.01, function(x){x$prob}) %>% unlist(),
+                                p_lr_predicted_class_2_0.01 = lapply(BCH_results$lr_3_0.01, function(x){x$prob}) %>% unlist(),
+                                p_lr_total = lapply(BCH_results$lr_total, function(x){x$prob}) %>% unlist(),
+                                p_lr_total_0.01 = lapply(BCH_results$lr_total_0.01, function(x){x$prob}) %>% unlist())
+
+
+
+
 #Save output to RDS.
 #BCH_results %>% saveRDS(file="./out/BCH_results.RDS")
+
+#Save Parameters Table to RDS
+#BCH_results_parameters %>% saveRDS(file="./out/BCH_results_parameters.RDS")
 ```
 
 <!--Each model (either with negative weights = 0 or negative weights = 0.01) can be obtained in the BCH_results tibble. The results from likelihood ratio tests are found in the columns that begin with "lr_". 1 means that the intercept is tested against the full model, 2 means that predicted class 1 is tested against the full model, 3 means that predicted class 2 is tested against the full model, and total means that the complete model was tested against an intercept only model. -->Predicted class 3 was chosen as the reference class because it contains people who have the highest probabilities of being in high quantiles of the motivator scales. It can therefore be considered a "high risk"-class. The regression weights can be interpreted as the difference in logits (log-odds of the probability to not answer 0 on the proclivity items) between the high risk class and the other classes. In other words, the significance of a regression weight tells us that there is a significant difference between the high risk class and the other classes when it comes to proclivity. 
