@@ -9,7 +9,7 @@ bibliography: bibliography.bib
 knitr::opts_chunk$set(echo=F, warning=F, message=F)
 
 #For reproducible results
-set.seed(42)
+set.seed(100)
 
 #Turn off scientific notification
 options(scipen=999)
