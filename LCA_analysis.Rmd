@@ -480,8 +480,7 @@ results <- cbind(Proclivity = c("Chat with a child", "Chat with a young person",
 results$CI_intercept <- paste0("[", format(round(exp(results$ci_l_intercept_0.01), 2), nsmall=2), ", ", format(round(exp(results$ci_r_intercept_0.01), 2), nsmall=2), "]")
 results$CI_class1 <- paste0("[", format(round(exp(results$ci_l_predicted_class_1_0.01), 2), nsmall=2), ", ", format(round(exp(results$ci_r_predicted_class_1_0.01), 2), nsmall=2), "]")
 results$CI_class2 <- paste0("[", format(round(exp(results$ci_l_predicted_class_2_0.01), 2), nsmall=2), ", ", format(round(exp(results$ci_r_predicted_class_2_0.01), 2), nsmall=2), "]")
-
-#add odds for each class
+#Add odds for each class
 results <- results %>% mutate(odds_predicted_class_1_0.01 = exp(results$b_intercept_0.01)*exp(results$b_predicted_class_1_0.01), 
                               odds_predicted_class_2_0.01 = exp(results$b_intercept_0.01)*exp(results$b_predicted_class_2_0.01),
                               odds_predicted_class_3_0.01 = exp(results$b_intercept_0.01))
@@ -500,5 +499,21 @@ flextable(results, col_keys=c("Proclivity", "p_lr_total_0.01", "b_intercept_0.01
   autofit()
 ```
 *Note.* Global LRT shows the *p* value of a test of the full against an intercept-only model. Penalised LRTs were used to obtain p values. Confidence intervals were computed using the Wald’s test statistics.
+
+```{r plot_proclivities}
+plot_results <- results %>% select(Proclivity, starts_with("odds")) %>% pivot_longer(cols=starts_with("odds"), names_to="class", values_to="odds")
+
+plot_results$class <- rep(1:3, 17)
+
+ggplot(plot_results, aes(x=class, y=odds, group=class, fill=class)) +
+  facet_grid(~Proclivity) +
+  geom_bar(stat="identity", position="dodge")
+
+ggplot(plot_results, aes(x=Proclivity, y=odds, group=class)) +
+  geom_line()
+
+
+```
+
 
 # __References__
