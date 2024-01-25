@@ -15,7 +15,7 @@ set.seed(100)
 options(scipen=999)
 
 #Declare vector of required packages
-packages <- c("tidyverse", "readr", "tidySEM", "rio", "ggpubr", "flextable", "logistf")
+packages <- c("tidyverse", "readr", "tidySEM", "MOTE", "flextable", "logistf")
 
 #Load function to check whether required packages are installed & load required packages
 source("./functions/check_required_packages.R")
@@ -41,96 +41,17 @@ The performed analyses are exploratory. -->
 #We use gender instead of sex. A 2 represents a male. We want to only grab males. 
 data_males <- haven::read_spss("./data/data raw/dataE_2112.sav") %>% dplyr::select(gender, CASE, sexdrive2, CSBD, PPCS_6, meffort, socialanx, lon, mvalue, attr) %>% filter(gender == 2) %>% dplyr::select(-gender)
 
-#The same for females
-data_females <- haven::read_spss("./data/data raw/dataE_2112.sav") %>% dplyr::select(gender, CASE, sexdrive2, CSBD, PPCS_6, meffort, socialanx, lon, mvalue, attr) %>% filter(gender == 1) %>% dplyr::select(-gender)
+# #The same for females
+# data_females <- haven::read_spss("./data/data raw/dataE_2112.sav") %>% dplyr::select(gender, CASE, sexdrive2, CSBD, PPCS_6, meffort, socialanx, lon, mvalue, attr) %>% filter(gender == 1) %>% dplyr::select(-gender)
 
 #We refrain from renaming the variables to make interpretation across analyses easier. 
 ```
 
-After the initial approach (i.e. investigating both genders at once with an LPA and OPTICS) did not result in any interpretable solutions, only participants who identified as male were analysed from here on (for the analyses with the female participants, see the supplemental material). Because of the highly skewed distributions of some of the variables, we decided to split the scales into quantiles (see Figure A), and, when sufficient data to split the data into quantiles was not available, to dichotomise them. This was the case for sexual interest in children, where 97% of the participants completely denied sexual interest in children (i.e., selected 0 on all three items).
+After the initial approach (i.e. investigating both genders at once with an LPA and OPTICS) did not result in any interpretable solutions, only participants who identified as male were analysed from here on (for the analyses with the female participants, see the supplemental material). Because of the highly skewed distributions of some of the variables, we decided to split the scales into quantiles (see Figure A), and, when sufficient data to split the data into quantiles was not available, to dichotomise them. This was the case for sexual interest in children, where 97% of the participants completely denied sexual interest in children (i.e., selected 0 on all three items). The descriptives for the newly categorised scales are shown in Table A.
 
-__Figure A__
-
-*Scale Distributions With Quantiles*
-```{r violin plots, fig.width=12}
-#create long data frame for plotting, including only the relevant variables
-plotd_m <- data_males %>% select(CASE, sexdrive2, CSBD, PPCS_6, meffort, socialanx, lon, mvalue, attr) %>% pivot_longer(cols=sexdrive2:attr, names_to="var", values_to="score")
-#create a table with the quantiles for each variable
-quant_m <- as.data.frame(t(do.call(rbind.data.frame, (lapply(c("CSBD", "lon", "meffort", "mvalue", "PPCS_6", "sexdrive2", "socialanx"), function(x){parse_number(gsub(",.*$", "", levels(cut_number(as.data.frame(data_males)[, x], 4))))})))))
-#rename columns
-colnames(quant_m) <- c("CSBD", "lon", "meffort", "mvalue", "PPCS_6", "sexdrive2", "socialanx")
-#pivot for plotting
-quant_m <- pivot_longer(quant_m, cols=CSBD:socialanx, names_to='var')
-#call on function in other R script
-source("./functions/flat_violin.R")
-#plot
-g1 <- ggplot(plotd_m %>% filter(var!="attr"), aes(x=as.factor(var), y=score, fill=var)) +
-  geom_flat_violin(scale="width") +
-  scale_fill_grey(start=.5, end=.9, aesthetics = "fill") +
-  geom_dotplot(binaxis="y", dotsize=.04, stackdir="down", binwidth=.3, position=position_nudge(-.025)) +
-  geom_errorbar(data=quant_m, aes(x=as.factor(var), ymin=value, ymax=value, linetype="quantiles"), inherit.aes=F, linewidth=.5, width=.3, position=position_nudge(x=.15)) +
-  scale_linetype_manual(values="solid") +
-  guides(linetype=guide_legend(""), fill="none") +
-  scale_x_discrete(labels=c("CSBD"="CSBD-7", "lon"="LON", "meffort"="Mating effort", "mvalue"="Embodied capital", "PPCS_6"="PPCS-6", "sexdrive2"="Sex drive", "socialanx"="Social anxiety")) +
-  labs(x="", y="value") +
-  theme_classic() +
-  theme(axis.text.x=element_text(angle=45, hjust=1, size=10))
-#plot attraction to children separately
-g2 <- ggplot(plotd_m %>% filter(var=="attr"), aes(x=score)) +
-  geom_bar() +
-  theme_classic() +
-  labs(x="attraction to children", y="count")
-#arrange plots
-ggarrange(g1, g2, ncol=2, nrow=1, widths=c(1.6, 1))
-```
-
-<!--Distributions female participants:
-
-```{r plot women, echo=F, fig.width=12}
-#create long data frame for plotting, including only the relevant variables
-plotd_f <- data_females %>% select(CASE, sexdrive2, CSBD, PPCS_6, meffort, socialanx, lon, mvalue, attr) %>% pivot_longer(cols=sexdrive2:attr, names_to="var", values_to="score")
-#create a table with the quantiles for each variable (except CSBD & PPCS_6)
-quant_f <- as.data.frame(t(do.call(rbind.data.frame, (lapply(c("lon", "meffort", "mvalue", "sexdrive2", "socialanx"), function(x){parse_number(gsub(",.*$", "", levels(cut_number(as.data.frame(data_females)[, x], 4))))})))))
-#rename columns
-colnames(quant_f) <- c("lon", "meffort", "mvalue", "sexdrive2", "socialanx")
-#pivot for plotting
-quant_f <- pivot_longer(quant_f, cols=lon:socialanx, names_to='var')
-#add CSBD & PPCS_6 manually because they can only be dichotomised
-quant_f <- rbind(quant_f, pivot_longer(as.data.frame(t(do.call(rbind.data.frame, (lapply(c("CSBD", "PPCS_6"), function(x){parse_number(gsub(",.*$", "", levels(cut_number(as.data.frame(data_females)[, x], 2))))}))))), cols=V1:V2, names_to='var'))
-#rename variables
-quant_f$var[quant_f$var=="V1"] <- "CSBD"
-quant_f$var[quant_f$var=="V2"] <- "PPCS_6"
-#call on function in other R script
-source("./functions/flat_violin.R")
-#plot
-g3 <- ggplot(plotd_f %>% filter(var!="attr"), aes(x=as.factor(var), y=score, fill=var)) +
-  geom_flat_violin(scale="width") +
-  scale_fill_manual(values=c("#444444", "#4d4d4d", "#666666", "#999999", "#b3b3b3", "#bfbfbf", "#cccccc")) +
-  geom_dotplot(binaxis="y", dotsize=.04, stackdir="down", binwidth=.3, position=position_nudge(-.025)) +
-  geom_errorbar(data=quant_f, aes(x=as.factor(var), ymin=value, ymax=value, linetype="quantiles"), inherit.aes=F, linewidth=.5, width=.3, position=position_nudge(x=.15)) +
-  scale_linetype_manual(values="solid") +
-  guides(linetype=guide_legend(""), fill="none") +
-  labs(x="", y="value") +
-  theme_classic()
-#plot attraction to children separately
-g4 <- ggplot(plotd_f %>% filter(var=="attr"), aes(x=score)) +
-  geom_bar() +
-  theme_classic() +
-  labs(x="attraction to children", y="count")
-#arrange plots
-ggarrange(g3, g4, ncol=2, nrow=1, widths=c(1.6, 1))
-#clean up
-rm(g1)
-rm(g2)
-rm(g3)
-rm(g4)
-```
---> 
-
-Descriptives for the newly categorised scales are shown in Table A.
 ```{r factor, eval=F}
 #We factorise and bin the variables in the data frame, such that we hopefully get enough cases per bin to estimate parameters in the LCA. Attr is dichotomised, so that we have at least some participants in the cells. However, attr is so severely skewed that we get only around 50 participants who answer non-zero - that will likely produce problems with the LCA. 
-m_factor <- lapply(data_males %>% select(-CASE, -attr),cut_number, n=4) %>% as_tibble()
+m_factor <- lapply(data_males %>% select(-CASE, -attr), cut_number, n=4) %>% as_tibble()
 m_factor <- lapply(m_factor, ordered) %>% as_tibble()
 data_males <- cbind(data_males$CASE, m_factor, data_males$attr) %>% mutate(attr  = case_when(`data_males$attr` == 0 ~ "no attraction", `data_males$attr` > 0 ~ "some attraction"))
 data_males <- data_males %>% select(-`data_males$attr`)
@@ -151,8 +72,8 @@ rm(m_factor)
 # #Dichotomise CSBD, PPCS_6 because they have not enough cases per bin to cluster it in quantiles. The names of the factor levels show where the cut was set.
 # data_females <- data_females %>% mutate(PPCS_6 = cut_number(data_females$PPCS_6, n=2) %>% ordered(), CSBD = cut_number(data_females$CSBD, n=2) %>% ordered())
 
-#Clean up
-rm(f_factor)
+# #Clean up
+# rm(f_factor)
 
 #Descriptives for males
 desc_m <- tidySEM::descriptives(data_males %>% select(-CASE))
@@ -168,14 +89,14 @@ __Table A__
 *Descriptives for the Newly Categorised Scales*
 ```{r descriptives}
 # #Create vector with rownames
-# Variable <- c("Sexual interest in children", "CSBD-7", "LON", "Mating effort", "Low embodied capital", "PPCS-6", "Sex drive", "Social anxiety")
+# Variable <- c("Sexual interest in children", "CSBD-7", "LON", "Mating effort", "Mating value", "PPCS-6", "Sex drive", "Social anxiety")
 # #Merge male and female descriptives tables
 # desc <- merge(desc_m, desc_f, by="name")
 # #Bind Variable column to the beginning
 # desc <- cbind(Variable, desc)
 
 #Create vector with rownames
-Scale <- c("Sexual interest in children", "CSBD-7", "LON", "Mating effort", "Embodied capital", "PPCS-6", "Sex drive", "Social anxiety")
+Scale <- c("Sexual interest in children", "CSBD-7", "LON", "Mating effort", "Mating value", "PPCS-6", "Sex drive", "Social anxiety")
 #Bind Variable column to the beginning
 desc_m <- cbind(Scale, desc_m[, -1])
 
@@ -195,7 +116,8 @@ Then females:
 ```{r show_desc_f, echo=FALSE}
 desc_f
 ```
-
+-->
+<!--
 # Performing LCA
 
 We begin with the data set comprised of males.
@@ -298,7 +220,7 @@ __Table C__
 *Conditional Item Probabilities for the Three-Class Model*
 ```{r prob_table_m, echo=F}
 #Make table presentable
-prob_table_LCA_m$Variable <- c(rep(c("Sex drive", "CSBD-7", "PPCS-6", "Mating effort", "Social anxiety", "LON", "Embodied capital", "Sexual interest in children"), each=4))[1:nrow(prob_table_LCA_m)]
+prob_table_LCA_m$Variable <- c(rep(c("Sex drive", "CSBD-7", "PPCS-6", "Mating effort", "Social anxiety", "LON", "Mating value", "Sexual interest in children"), each=4))[1:nrow(prob_table_LCA_m)]
 #Pretty display
 flextable(prob_table_LCA_m) %>%
   set_formatter(Probability.class1=function(x) format(round(x, 2), nsmall=2),
@@ -319,17 +241,16 @@ __Figure C__
 ```{r prob_plot_m, echo=F, fig.width=12}
 plot_prob(lca_final_model_m) +
   scale_fill_grey(start = 0.9, end = 0.5, aesthetics = "fill") +
-  scale_x_discrete(labels=c("attr"="Sexual interest in children", "CSBD"="CSBD-7", "lon"="LON", "meffort"="Mating effort", "mvalue"="Embodied capital", "PPCS_6"="PPCS-6", "sexdrive2"="Sex drive", "socialanx"="Social anxiety")) +
+  scale_x_discrete(labels=c("attr"="Sexual interest in children", "CSBD"="CSBD-7", "lon"="LON", "meffort"="Mating effort", "mvalue"="Mating value", "PPCS_6"="PPCS-6", "sexdrive2"="Sex drive", "socialanx"="Social anxiety")) +
   labs(x="") +
   theme_classic() +
   theme(axis.text.x=element_text(angle=45, hjust=1, size=10))
 ```
 
-# 
 <!--## Females
 
 Now we redo the analysis with the subset of female participants. The cutoff values for fit indices obviously stay the same. It should be noted that two more variables needed to be dichotomised in the female sample, because they were also to skewed to form quantiles. Those were PPCS and CSBD.
-```{r LCA_females, eval=FALSE, include=F}
+```{r LCA_females, eval=F, include=F}
 #We carry on with a LCA on the female sample. We stay with a maximum of seven clusters.
 
 lca_models_f <- mx_lca(data=data_females %>% select(-CASE), classes=1:7)
@@ -352,42 +273,42 @@ prob_table_LCA_f <- reshape(prob_table_LCA_f, direction="wide", v.names="Probabi
 ```
 
 ### Scree Plot Females
-```{r scree_plot_f, echo=FALSE}
+```{r scree_plot_f, eval=F}
 plot(lca_fit_f)
 ```
 
 ### Class Proportions Females
-```{r class_proportion_f, echo=F}
+```{r class_proportion_f, eval=F}
 #class proportions
 class_prob_lca_f <- class_prob(lca_final_model_f, "sum.posterior")
 class_prob_lca_f
 ```
 
 ### Fit Table Females
-```{r showfittable_f, echo=FALSE}
+```{r showfittable_f, eval=FA}
 lca_fit_f
 ```
 
 ### AvePP by Most Likely Class for Females
-```{r avePP_f, echo=FALSE}
+```{r avePP_f, eval=F}
 class_prob(lca_final_model_f, type="avg.mostlikely")
 ```
 
 ### Conditional Item Probabilities for Females
-```{r prob_table_f, echo=FALSE}
+```{r prob_table_f, eval=F}
 prob_table_LCA_f
 ```
 
-```{r prob_plot_f, echo=FALSE, fig.width=12}
+```{r prob_plot_f, eval=F, fig.width=12}
 plot_prob(lca_final_model_f)
 ```
 -->
 
-# __Distal Outcomes Analysis__
+# __Distal Outcomes Analyses__
 
-To test whether class membership is related to the proclivity for sexually deviant behaviours, distal outcomes analyses were performed with the newly created sexual deviance scale as well as all single proclivity items. 
+To test whether class membership is related to the proclivity for sexually deviant behaviours, distal outcomes analyses were performed with all single proclivity items. 
 
-Since class membership is measured imperfectly by an LCA, the assignment of participants to a class is associated with a certain amount of error. If this error is left unaccounted for and predicted class membership from an LCA is used as a predictor in subsequent analyses, bias is introduced. Multiple approaches have been proposed, by which the error associated with class assignment is taken into account. The so-called three-step approach will first fit an independent measurement model (here, the LCA without any covariates or outcomes), assign participants to latent classes, and then use the predicted classes as estimates for the latent classes (Bakk & Kuha, 2021). The important difference between naive and recommended three-step approaches is the employment of countermeasures at the second or third step to avoid the bias resulting from imperfect class assignments.
+Since class membership is measured imperfectly by a LCA, the assignment of participants to a class is associated with a certain amount of error. If this error is left unaccounted for and predicted class membership from a LCA is used as a predictor in subsequent analyses, bias is introduced. Multiple approaches have been proposed, by which the error associated with class assignment is taken into account. The so-called three-step approach will first fit an independent measurement model (here, the LCA without any covariates or outcomes), assign participants to latent classes, and then use the predicted classes as estimates for the latent classes (Bakk & Kuha, 2021). The important difference between naive and recommended three-step approaches is the employment of countermeasures at the second or third step to avoid the bias resulting from imperfect class assignments.
 
 The approach chosen here is known as modified Bolck-Croon-Hagenaars (BCH) approach and was developed by Bakk et al. (2013), building on and generalising the work of Vermunt et al. (2012). In this approach, complex sample weights are obtained for the participants and used in the estimation of the target model in ensuing analyses. However, the weighing resulted in negative weights, which is not uncommon when using the modified BCH approach (e.g. Vermunt, 2010), but can cause problems in the presence of low class separability, as found in the present analysis.
 
@@ -541,9 +462,6 @@ BCH_results_parameters <-tibble(outcomes = BCH_results$outcomes %>% sort(),
                                 p_lr_total = lapply(BCH_results$lr_total, function(x){x$prob}) %>% unlist(),
                                 p_lr_total_0.01 = lapply(BCH_results$lr_total_0.01, function(x){x$prob}) %>% unlist())
 
-
-
-
 #Save output to RDS.
 #BCH_results %>% saveRDS(file="./out/BCH_results.RDS")
 
@@ -551,13 +469,31 @@ BCH_results_parameters <-tibble(outcomes = BCH_results$outcomes %>% sort(),
 #BCH_results_parameters %>% saveRDS(file="./out/BCH_results_parameters.RDS")
 ```
 
-<!--Each model (either with negative weights = 0 or negative weights = 0.01) can be obtained in the BCH_results tibble. The results from likelihood ratio tests are found in the columns that begin with "lr_". 1 means that the intercept is tested against the full model, 2 means that predicted class 1 is tested against the full model, 3 means that predicted class 2 is tested against the full model, and total means that the complete model was tested against an intercept only model. -->Predicted class 3 was chosen as the reference class because it contains people who have the highest probabilities of being in high quantiles of the motivator scales. It can therefore be considered a "high risk"-class. The regression weights can be interpreted as the difference in logits (log-odds of the probability to not answer 0 on the proclivity items) between the high risk class and the other classes. In other words, the significance of a regression weight tells us that there is a significant difference between the high risk class and the other classes when it comes to proclivity. 
+<!--Each model (either with negative weights = 0 or negative weights = 0.01) can be obtained in the BCH_results tibble. The results from likelihood ratio tests are found in the columns that begin with "lr_". 1 means that the intercept is tested against the full model, 2 means that predicted class 1 is tested against the full model, 3 means that predicted class 2 is tested against the full model, and total means that the complete model was tested against an intercept only model. -->
 
-```{r}
-BCH_results_parameters %>% select(starts_with("b") & ends_with("0.01"), starts_with("p") & ends_with("0.01"))
+The predicted class 3 was chosen as the reference class because it contained the participants with the highest probabilities of being in high quantiles of the motivator scales. It can therefore be considered a "high risk"-class. The odds ratios (ORs) show <!--The regression weights can be interpreted as the difference in logits (log-odds of the probability to not answer 0 on the proclivity items) between the high risk class and the other classes. In other words, the significance of a regression weight tells us that there is a significant difference between the high risk class and the other classes when it comes to proclivity.-->
 
-#transform into OR with exp()
+```{r show_BCH_results}
+#Put relevant results in a table
+results <- cbind(Proclivity = c("Chat with a child", "Chat with a young person", "Drive under influence", "Make a gift to a child", "Make a gift to a young person", "Kill someone", "Watch CSEM", "Watch CSEM on the darknet", "Watch porn with a young person", "Have sex with a prostitute", "Watch porn in public", "Rape someone", "Rob a bank", "Have sex with a child", "Have sex with a young person", "Drive over the speed limit", "Have sex with an animal"), BCH_results_parameters %>% select(ends_with("total_0.01"), starts_with("b") & ends_with("0.01"), starts_with("p") & ends_with("0.01"), starts_with("ci") & ends_with("0.01")))
+#Create extra columns with CIs
+results$CI_intercept <- paste0("[", format(round(exp(results$ci_l_intercept_0.01), 2), nsmall=2), ", ", format(round(exp(results$ci_r_intercept_0.01), 2), nsmall=2), "]")
+results$CI_class1 <- paste0("[", format(round(exp(results$ci_l_predicted_class_1_0.01), 2), nsmall=2), ", ", format(round(exp(results$ci_r_predicted_class_1_0.01), 2), nsmall=2), "]")
+results$CI_class2 <- paste0("[", format(round(exp(results$ci_l_predicted_class_2_0.01), 2), nsmall=2), ", ", format(round(exp(results$ci_r_predicted_class_2_0.01), 2), nsmall=2), "]")
+#Pretty output
+flextable(results, col_keys=c("Proclivity", "p_lr_total_0.01", "b_intercept_0.01", "CI_intercept", "p_lr_intercept_0.01", "b_predicted_class_1_0.01", "CI_class1", "p_lr_predicted_class_1_0.01", "b_predicted_class_2_0.01", "CI_class2", "p_lr_predicted_class_2_0.01")) %>% 
+  set_formatter(p_lr_total_0.01=function(x) apa(x, decimals=3, leading=F), 
+                b_intercept_0.01=function(x) format(round(exp(x), 2), nsmall=2), #transform into OR with exp()
+                p_lr_intercept_0.01=function(x) apa(x, decimals=3, leading=F),
+                b_predicted_class_1_0.01=function(x) format(round(exp(x), 2), nsmall=2), 
+                p_lr_predicted_class_1_0.01=function(x) apa(x, decimals=3, leading=F),
+                b_predicted_class_2_0.01=function(x) format(round(exp(x), 2), nsmall=2), 
+                p_lr_predicted_class_2_0.01=function(x) apa(x, decimals=3, leading=F)) %>%
+  set_header_labels(p_lr_total_0.01="p", b_intercept_0.01="Odds", CI_intercept="CI", p_lr_intercept_0.01="p", b_predicted_class_1_0.01="OR", CI_class1="CI", p_lr_predicted_class_1_0.01="p", b_predicted_class_2_0.01="OR", CI_class2="CI", p_lr_predicted_class_2_0.01="p") %>%
+  add_header_row(values=c("", "Global LRT", "(Intercept)", "Class 1", "Class 2"), colwidths=c(1, 1, 3, 3, 3)) %>% 
+  theme_booktabs() %>%
+  autofit()
 ```
-
+*Note.* Global LRT shows the *p* value of a test of the full against an intercept-only model.
 
 # __References__
