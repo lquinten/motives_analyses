@@ -480,6 +480,11 @@ results <- cbind(Proclivity = c("Chat with a child", "Chat with a young person",
 results$CI_intercept <- paste0("[", format(round(exp(results$ci_l_intercept_0.01), 2), nsmall=2), ", ", format(round(exp(results$ci_r_intercept_0.01), 2), nsmall=2), "]")
 results$CI_class1 <- paste0("[", format(round(exp(results$ci_l_predicted_class_1_0.01), 2), nsmall=2), ", ", format(round(exp(results$ci_r_predicted_class_1_0.01), 2), nsmall=2), "]")
 results$CI_class2 <- paste0("[", format(round(exp(results$ci_l_predicted_class_2_0.01), 2), nsmall=2), ", ", format(round(exp(results$ci_r_predicted_class_2_0.01), 2), nsmall=2), "]")
+
+#add odds for each class
+results <- results %>% mutate(odds_predicted_class_1_0.01 = exp(results$b_intercept_0.01)*exp(results$b_predicted_class_1_0.01), 
+                              odds_predicted_class_2_0.01 = exp(results$b_intercept_0.01)*exp(results$b_predicted_class_2_0.01),
+                              odds_predicted_class_3_0.01 = exp(results$b_intercept_0.01))
 #Pretty output
 flextable(results, col_keys=c("Proclivity", "p_lr_total_0.01", "b_intercept_0.01", "CI_intercept", "p_lr_intercept_0.01", "b_predicted_class_1_0.01", "CI_class1", "p_lr_predicted_class_1_0.01", "b_predicted_class_2_0.01", "CI_class2", "p_lr_predicted_class_2_0.01")) %>% 
   set_formatter(p_lr_total_0.01=function(x) apa(x, decimals=3, leading=F), 
