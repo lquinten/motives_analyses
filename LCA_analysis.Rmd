@@ -361,8 +361,7 @@ BCH_expanded_dataframe <- BCH_expanded_dataframe %>% full_join(y=haven::read_sps
 Significance of regression weights was tested using a penalised LRT, as implemented by the R package logistf (Heinze et al., 2023), which was also used to estimate the FLIC models. To make the estimation for the model with the proclivity to have sex with a prostitute item possible, the iteratively weighted least squares method instead of the standard Newton-Raphson approach had to be used for optimisation. 
 
 ```{r BCH_logreg, eval=F}
-#Set up a dataframe for the the outputs of the regression analysis. Each row corresponds to one item.
-BCH_results <- tibble(outcomes = colnames(BCH_expanded_dataframe %>% select(starts_with("Y_"))))
+
 
 #The Regression estimation appears to be not working with negative weights. I do not understand why this is neccessarily the case. We approach to ad-hoc solutions: 1. Fixing the negative weights to zero, 2. We fix the negative weights to 0.01. 
 
@@ -387,9 +386,37 @@ for (i in 1:17){
   log_regs_min[[i]] <- logistf::logistf(formula=models[i], data = BCH_expanded_dataframe,control = logistf.control(fit="IRLS"), model=TRUE, weights=BCH_expanded_dataframe$modal_weight_3) %>% flic()
 }
 
+#Enter Extra Analysis for people who assumed young persons to be of an age range that is potentially problematic, i.e. <15. Extra analysis was inspired by information that people consuming tend to call victims young persons. 
+
+CASE_yp <-  haven::read_spss("./data/data raw/dataE_2112.sav") %>% filter(gender == 2)  %>% filter(range_young1 < 15) %>% dplyr::select(CASE) %>% unlist()
+
+BCH_expanded_dataframe %>% filter(CASE %in% CASE_yp) %>% select(contains("Youth"))
+
+Yp_variables <- BCH_expanded_dataframe %>% select(contains("Yp")) %>% colnames()
+Yp_models <- paste(Yp_variables, "~", predictors, sep=" ")
+
+
+logregs_yp <- lapply(Yp_models, function(x){
+  logistf(x,data=BCH_expanded_dataframe %>% filter(CASE %in% CASE_yp),
+          weights=BCH_expanded_dataframe[BCH_expanded_dataframe$CASE %in% CASE_yp,]$modal_weight_2) %>%
+    flic()
+})
+
+logregs_yp_0.01 <- lapply(Yp_models, function(x){
+  logistf(x,data=BCH_expanded_dataframe %>% filter(CASE %in% CASE_yp),
+          weights=BCH_expanded_dataframe[BCH_expanded_dataframe$CASE %in% CASE_yp,]$modal_weight_3) %>%
+    flic()
+})
+
+
+######Adapt Code for the extra analyses 
+#Set up a dataframe for the the outputs of the regression analysis. Each row corresponds to one item.
+
+BCH_results <- tibble(outcomes = c(colnames(BCH_expanded_dataframe %>% select(starts_with("Y_"))),paste(Yp_variables, "_red", sep="")))
+
 #Combine the results in a dataframe
-BCH_results <- BCH_results %>% mutate(models = log_regs)
-BCH_results <- BCH_results %>% mutate(models_0.01_weights = log_regs_min)
+BCH_results <- BCH_results %>% mutate(models = c(log_regs,logregs_yp))
+BCH_results <- BCH_results %>% mutate(models_0.01_weights = c(log_regs_min,logregs_yp_0.01))
 
 #Because of the case weights we have to test the parameters manually via likelihood ratio tests
 BCH_results <- BCH_results %>% mutate(
@@ -427,7 +454,7 @@ BCH_results <- BCH_results[order(BCH_results$outcomes),]
 #All lr-test p-values start with p_lr.
 #Use tidyverse select functions 
 
-BCH_results_parameters <-tibble(outcomes = BCH_results$outcomes %>% sort(), 
+BCH_results_parameters <-tibble(outcomes = BCH_results$outcomes, 
                                 b_intercept = lapply(BCH_results$models, function(x){x$coefficients[1]}) %>% unlist(),
                                 b_predicted_class_1 = lapply(BCH_results$models, function(x){x$coefficients[2]}) %>% unlist(),
                                 b_predicted_class_2 =lapply(BCH_results$models, function(x){x$coefficients[3]}) %>% unlist(),
@@ -571,6 +598,33 @@ ggplot(plot_results_2, aes(x=Proclivity, y=odds, group=as.factor(class), linetyp
   theme_classic() +
   theme(axis.text.x=element_text(angle=45, hjust=1, size=8))
 ```
+
+
+
+```{r young_persons_analysis}
+
+CASE_yp <-  haven::read_spss("./data/data raw/dataE_2112.sav") %>% filter(gender == 2)  %>% filter(range_young1 < 15) %>% dplyr::select(CASE) %>% unlist()
+
+BCH_expanded_dataframe %>% filter(CASE %in% CASE_yp) %>% select(contains("Youth"))
+
+Yp_variables <- BCH_expanded_dataframe %>% select(contains("Yp")) %>% colnames()
+Yp_models <- paste(Yp_variables, "~", predictors, sep=" ")
+
+
+logregs_yp <- lapply(Yp_models, function(x){
+  logistf(x,data=BCH_expanded_dataframe %>% filter(CASE %in% CASE_yp),
+          weights=BCH_expanded_dataframe[BCH_expanded_dataframe$CASE %in% CASE_yp,]$modal_weight_2) %>%
+    flic()
+})
+
+logregs_yp_0.01 <- lapply(Yp_models, function(x){
+  logistf(x,data=BCH_expanded_dataframe %>% filter(CASE %in% CASE_yp),
+          weights=BCH_expanded_dataframe[BCH_expanded_dataframe$CASE %in% CASE_yp,]$modal_weight_3) %>%
+    flic()
+})
+
+```
+
 
 
 # __References__
