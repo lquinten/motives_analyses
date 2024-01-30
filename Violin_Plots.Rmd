@@ -61,7 +61,7 @@ ggplot(plotd_m %>% filter(var!="attr"), aes(x=as.factor(var), y=score, fill=var)
   geom_errorbar(data=quant_m, aes(x=as.factor(var), ymin=value, ymax=value, linetype="Quantiles"), inherit.aes=F, linewidth=.5, width=.3, position=position_nudge(x=.15)) +
   scale_linetype_manual(values="solid") +
   guides(linetype=guide_legend(""), fill="none") +
-  scale_x_discrete(labels=c("CSBD"="CSBD-7", "lon"="LON", "meffort"="Mating effort", "mvalue"="Mating value", "PPCS_6"="PPCS-6", "sexdrive2"="Sex drive", "socialanx"="Social anxiety")) +
+  scale_x_discrete(labels=c("CSBD"="Compulsive sex.", "lon"="Loneliness", "meffort"="Mating effort", "mvalue"="Mating value", "PPCS_6"="Probl. porn use", "sexdrive2"="Sex drive", "socialanx"="Social anxiety")) +
   labs(x="", y="Value") +
   theme_classic() +
   theme(axis.text.x=element_text(angle=45, hjust=1, size=10))
@@ -69,7 +69,7 @@ ggplot(plotd_m %>% filter(var!="attr"), aes(x=as.factor(var), y=score, fill=var)
 ggplot(plotd_m %>% filter(var=="attr"), aes(x=score)) +
   geom_bar() +
   theme_classic() +
-  labs(x="Sexual interest in children", y="Count")
+  labs(x="Attraction to children", y="Count")
 ```
 
 ```{r plot women, echo=F, fig.width=12, eval=F}

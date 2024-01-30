@@ -96,7 +96,7 @@ __Table A__
 # desc <- cbind(Variable, desc)
 
 #Create vector with rownames
-Scale <- c("Sexual interest in children", "CSBD-7", "LON", "Mating effort", "Mating value", "PPCS-6", "Sex drive", "Social anxiety")
+Scale <- c("Attraction to children", "Compulsive sex.", "Loneliness", "Mating effort", "Mating value", "Probl. porn use", "Sex drive", "Social anxiety")
 #Bind Variable column to the beginning
 desc_m <- cbind(Scale, desc_m[, -1])
 
@@ -220,7 +220,7 @@ __Table C__
 *Conditional Item Probabilities for the Three-Class Model*
 ```{r prob_table_m, echo=F}
 #Make table presentable
-prob_table_LCA_m$Variable <- c(rep(c("Sex drive", "CSBD-7", "PPCS-6", "Mating effort", "Social anxiety", "LON", "Mating value", "Sexual interest in children"), each=4))[1:nrow(prob_table_LCA_m)]
+prob_table_LCA_m$Variable <- c(rep(c("Sex drive", "Compulsive sex.", "Probl. porn use", "Mating effort", "Social anxiety", "Loneliness", "Mating value", "Attraction to children"), each=4))[1:nrow(prob_table_LCA_m)]
 #Pretty display
 flextable(prob_table_LCA_m) %>%
   set_formatter(Probability.class1=function(x) format(round(x, 2), nsmall=2),
@@ -241,10 +241,10 @@ __Figure C__
 ```{r prob_plot_m, echo=F, fig.width=12}
 plot_prob(lca_final_model_m) +
   scale_fill_grey(start = 0.9, end = 0.5, aesthetics = "fill") +
-  scale_x_discrete(labels=c("attr"="Sexual interest in children", "CSBD"="CSBD-7", "lon"="LON", "meffort"="Mating effort", "mvalue"="Mating value", "PPCS_6"="PPCS-6", "sexdrive2"="Sex drive", "socialanx"="Social anxiety")) +
+  scale_x_discrete(labels=c("attr"="Attraction to children", "CSBD"="Compulsive sex.", "lon"="Loneliness", "meffort"="Mating effort", "mvalue"="Mating value", "PPCS_6"="Probl. porn use", "sexdrive2"="Sex drive", "socialanx"="Social anxiety")) +
   labs(x="") +
   theme_classic() +
-  theme(axis.text.x=element_text(angle=70, hjust=1, size=10))
+  theme(axis.text.x=element_text(angle=65, hjust=1, size=10))
 ```
 
 <!--## Females
