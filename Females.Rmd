@@ -1,0 +1,210 @@
+---
+title: "Females"
+output: word_document
+---
+
+```{r setup & library, include=F, message=F, warning=F}
+#Do not show code chunks in the knitted document
+knitr::opts_chunk$set(echo=F, warning=F, message=F)
+
+#For reproducible results
+set.seed(100)
+
+#Turn off scientific notification
+options(scipen=999)
+
+#Declare vector of required packages
+packages <- c("tidyverse", "readr", "tidySEM", "MOTE", "flextable", "logistf")
+
+#Load function to check whether required packages are installed & load required packages
+source("./functions/check_required_packages.R")
+check_required_packages(packages)
+lapply(packages, require, character.only=T)
+
+#Clean up
+rm(packages)
+
+#######ATTENTION!!!
+#At this point we load a pre-saved .RData file in which the environment is saved. That makes the code less reproducible, but removing the eval=F specifications in all code blocks will make that possible 
+load(".RData")
+
+##DATA##
+
+#We use gender instead of sex. A 1 represents a female. We want to only grab females. 
+data_females <- haven::read_spss("./data/data raw/dataE_2112.sav") %>% dplyr::select(gender, CASE, sexdrive2, CSBD, PPCS_6, meffort, socialanx, lon, mvalue, attr) %>% filter(gender == 1) %>% dplyr::select(-gender)
+```
+
+# 1. Distributions of Motivational Risk Variables
+
+```{r factor, eval=F}
+#Re-coding for the female data. Be reminded that the cuts for the quantiles are likely different between males and females - keep that in mind while interpreting the LCAs!
+f_factor <- lapply(data_females %>% select(-CASE, -attr, -CSBD, -PPCS_6),cut_number, n=4) %>% as.tibble()
+f_factor <- lapply(f_factor, ordered) %>% as.tibble()
+data_females <- cbind(data_females$CASE, f_factor, data_females$attr) %>% mutate(attr  = case_when(`data_females$attr` == 0 ~ "no attraction", `data_females$attr` > 0 ~ "some attraction"), CSBD = data_females$CSBD, PPCS_6 = data_females$PPCS_6)
+data_females <- data_females %>% select(-`data_females$attr`)
+data_females <- data_females %>% mutate(attr = attr %>% ordered())
+colnames(data_females)[1]<-"CASE"
+
+#Dichotomise CSBD, PPCS_6 because they have not enough cases per bin to cluster it in quantiles. The names of the factor levels show where the cut was set.
+data_females <- data_females %>% mutate(PPCS_6 = cut_number(data_females$PPCS_6, n=2) %>% ordered(), CSBD = cut_number(data_females$CSBD, n=2) %>% ordered())
+
+#Clean up
+rm(f_factor)
+
+#Descriptives for females
+desc_f <- tidySEM::descriptives(data_females %>% select(-CASE))
+desc_f <- desc_f %>% select(name, type, n, missing, unique, mode, mode_value, v)
+```
+
+Show violin plots of all distributions and quantiles.
+
+```{r violin plots}
+#create long data frame for plotting, including only the relevant variables
+plotd_f <- data_females %>% select(CASE, sexdrive2, CSBD, PPCS_6, meffort, socialanx, lon, mvalue, attr) %>% pivot_longer(cols=sexdrive2:attr, names_to="var", values_to="score")
+#create a table with the quantiles for each variable (except CSBD & PPCS_6)
+quant_f <- as.data.frame(t(do.call(rbind.data.frame, (lapply(c("lon", "meffort", "mvalue", "sexdrive2", "socialanx"), function(x){parse_number(gsub(",.*$", "", levels(cut_number(as.data.frame(data_females)[, x], 4))))})))))
+#rename columns
+colnames(quant_f) <- c("lon", "meffort", "mvalue", "sexdrive2", "socialanx")
+#pivot for plotting
+quant_f <- pivot_longer(quant_f, cols=lon:socialanx, names_to='var')
+#add CSBD & PPCS_6 manually because they can only be dichotomised
+quant_f <- rbind(quant_f, pivot_longer(as.data.frame(t(do.call(rbind.data.frame, (lapply(c("CSBD", "PPCS_6"), function(x){parse_number(gsub(",.*$", "", levels(cut_number(as.data.frame(data_females)[, x], 2))))}))))), cols=V1:V2, names_to='var'))
+#rename variables
+quant_f$var[quant_f$var=="V1"] <- "CSBD"
+quant_f$var[quant_f$var=="V2"] <- "PPCS_6"
+#call on function in other R script
+source("./functions/flat_violin.R")
+#plot
+ggplot(plotd_f %>% filter(var!="attr"), aes(x=as.factor(var), y=score, fill=var)) +
+  geom_flat_violin(scale="width") +
+  scale_fill_grey(start=.5, end=.9, aesthetics = "fill") +
+  geom_dotplot(binaxis="y", dotsize=.04, stackdir="down", binwidth=.3, position=position_nudge(-.025)) +
+  geom_errorbar(data=quant_f, aes(x=as.factor(var), ymin=value, ymax=value, linetype="Quantiles"), inherit.aes=F, linewidth=.5, width=.3, position=position_nudge(x=.15)) +
+  scale_linetype_manual(values="solid") +
+  guides(linetype=guide_legend(""), fill="none") +
+  scale_x_discrete(labels=c("CSBD"="Compulsive sex.", "lon"="Loneliness", "meffort"="Mating effort", "mvalue"="Mate value", "PPCS_6"="Probl. porn use", "sexdrive2"="Sex drive", "socialanx"="Social anxiety")) +
+  labs(x="", y="Value") +
+  theme_classic() +
+  theme(axis.text.x=element_text(angle=45, hjust=1, size=10))
+#plot attraction to children separately
+ggplot(plotd_f %>% filter(var=="attr"), aes(x=score)) +
+  geom_bar() +
+  theme_classic() +
+  labs(x="Attraction to children", y="Count")
+```
+
+Show new descriptives after categorising the variables according to the quantiles.
+
+```{r descriptives}
+#Create vector with rownames
+Scale <- c("Attraction to children", "Compulsive sex.", "Loneliness", "Mating effort", "Mate value", "Probl. porn use", "Sex drive", "Social anxiety")
+#Bind Variable column to the beginning
+desc_f <- cbind(Scale, desc_f[, -1])
+
+#Pretty output
+flextable(desc_f %>% select(-"type", -"missing")) %>%
+  set_formatter(v=function(x) format(round(x, 2), nsmall=2),
+                unique=function(x) format(round(x-1, 0), nsmall=0)) %>%
+  set_header_labels(n="N", unique="Categories", mode="Mode", mode_value="Modal value", v="v") %>%
+  theme_booktabs() %>%
+  autofit()
+```
+
+# LCA
+
+We redo the LCA with the subset of female participants. The cutoff values for fit indices obviously stay the same. It should be noted that two more variables needed to be dichotomised in the female sample, because they were also to skewed to form quantiles. Those were PPCS and CSBD.
+
+## Class Enumeration
+
+```{r LCA_females, eval=F, include=F}
+#We carry on with a LCA on the female sample. We stay with a maximum of seven clusters.
+
+lca_models_f <- mx_lca(data=data_females %>% select(-CASE), classes=1:7)
+
+#If non-convergence. Use mxTryHardOrdinal()
+
+lca_fit_f <- table_fit(lca_models_f) %>% select(Name, LL, n, Parameters, BIC, Entropy, prob_min, prob_max, n_min, np_ratio, np_local)
+
+#Entropy coeffient shows that the classes are not well separated. https://doi.org/10.1177/009579842093093 recommend a value of at least .8 and state that an LCA with an entropy coefficient lower than .6 will be har to publish.
+
+LR_lca_f <- lr_lmr(lca_models_f)
+
+lca_final_model_f <- lca_models_f[[3]] #x is the class enumaration of choice
+
+#Check results
+table_LCA_f <- table_results(lca_final_model_f)
+
+#conditional item probabilities
+prob_table_LCA_f <- table_prob(lca_final_model_f)
+prob_table_LCA_f <- reshape(prob_table_LCA_f, direction="wide", v.names="Probability", timevar="group", idvar = c("Variable", "Category"))
+
+#class proportions
+class_prob_lca_f <- class_prob(lca_final_model_f, "sum.posterior")
+```
+
+Show the BIC values for the different numbers of classes. It is best for three classes.
+
+```{r scree_plot_f}
+plot(lca_fit_f)
+```
+
+The following table shows how many participants would be in which class.
+
+```{r class proportion, echo=F}
+class_prob_lca_f
+```
+
+## Model Evaluation
+
+Show the different fit indices for the different numbers of classes.
+
+```{r showfittable_f}
+flextable(lca_fit_f) %>%
+  set_formatter(Entropy=function(x) format(round(x, 2), nsmall=2),
+                prob_min=function(x) format(round(x, 2), nsmall=2),
+                prob_max=function(x) format(round(x, 2), nsmall=2),
+                n_min=function(x) format(round(x, 2), nsmall=2),
+                np_ratio=function(x) format(round(x, 2), nsmall=2),
+                np_local=function(x) format(round(x, 2), nsmall=2)) %>%
+  set_header_labels(Name="Number of classes", LL="LogLikelihood", n="N", prob_min="Min prob", prob_max="Max prob", n_min="Min n", np_ratio="NP ratio", np_local="Local NP"
+                    ) %>%
+  theme_booktabs() %>%
+  autofit()
+```
+
+<!--AvePP by Most Likely Class for Females
+```{r avePP_f, eval=F}
+class_prob(lca_final_model_f, type="avg.mostlikely")
+```
+-->
+
+## Model Interpretation
+
+The table and plot show the conditional item probabilities for the three-class model. 
+
+```{r prob_table_f, eval=F}
+#Make table presentable
+prob_table_LCA_f$Variable <- c(rep(c("Sex drive", "Mating effort", "Social anxiety", "Loneliness", "Mate value"), each=4), "Attraction to children", "Attraction to children", "Compulsive sex.", "Compulsive sex.", "Probl. porn use", "Probl. porn use")
+#Pretty display
+flextable(prob_table_LCA_f) %>%
+  set_formatter(Probability.class1=function(x) format(round(x, 2), nsmall=2),
+                Probability.class2=function(x) format(round(x, 2), nsmall=2),
+                Probability.class3=function(x) format(round(x, 2), nsmall=2)) %>%
+  set_header_labels(Probability.class1="Class 1", Probability.class2="Class 2", Probability.class3="Class 3") %>%
+  theme_booktabs() %>%
+  autofit()
+```
+
+```{r prob_plot_f, fig.width=12}
+plot_prob(lca_final_model_f) +
+  scale_fill_grey(start = 0.9, end = 0.5, aesthetics = "fill") +
+  scale_x_discrete(labels=c("attr"="Attraction to children", "CSBD"="Compulsive sex.", "lon"="Loneliness", "meffort"="Mating effort", "mvalue"="Mate value", "PPCS_6"="Probl. porn use", "sexdrive2"="Sex drive", "socialanx"="Social anxiety")) +
+  labs(x="") +
+  theme_classic() +
+  theme(axis.text.x=element_text(angle=65, hjust=1, size=10))
+```
+
+
+
+
+

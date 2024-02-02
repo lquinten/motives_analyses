@@ -40,11 +40,6 @@ The performed analyses are exploratory. -->
 ```{r data, include=F}
 #We use gender instead of sex. A 2 represents a male. We want to only grab males. 
 data_males <- haven::read_spss("./data/data raw/dataE_2112.sav") %>% dplyr::select(gender, CASE, sexdrive2, CSBD, PPCS_6, meffort, socialanx, lon, mvalue, attr) %>% filter(gender == 2) %>% dplyr::select(-gender)
-
-# #The same for females
-# data_females <- haven::read_spss("./data/data raw/dataE_2112.sav") %>% dplyr::select(gender, CASE, sexdrive2, CSBD, PPCS_6, meffort, socialanx, lon, mvalue, attr) %>% filter(gender == 1) %>% dplyr::select(-gender)
-
-#We refrain from renaming the variables to make interpretation across analyses easier. 
 ```
 
 After the initial approach (i.e. investigating both genders at once with an LPA and OPTICS) did not result in any interpretable solutions, only participants who identified as male were analysed from here on (for the analyses with the female participants, see the supplemental material). Because of the highly skewed distributions of some of the variables, we decided to split the scales into quantiles (see Figure A), and, when sufficient data to split the data into quantiles was not available, to dichotomise them. This was the case for sexual interest in children, where 97% of the participants completely denied sexual interest in children (i.e., selected 0 on all three items). The descriptives for the newly categorised scales are shown in Table A.
@@ -61,27 +56,9 @@ colnames(data_males)[1]<-"CASE"
 #Clean up
 rm(m_factor)
 
-# #We redo the re-coding for the female data. Be reminded that the cuts for the quantiles are likely different between males and females - keep that in mind while interpreting the LCAs!
-# f_factor <- lapply(data_females %>% select(-CASE, -attr, -CSBD, -PPCS_6),cut_number, n=4) %>% as.tibble()
-# f_factor <- lapply(f_factor, ordered) %>% as.tibble()
-# data_females <- cbind(data_females$CASE, f_factor, data_females$attr) %>% mutate(attr  = case_when(`data_females$attr` == 0 ~ "no attraction", `data_females$attr` > 0 ~ "some attraction"), CSBD = data_females$CSBD, PPCS_6 = data_females$PPCS_6)
-# data_females <- data_females %>% select(-`data_females$attr`)
-# data_females <- data_females %>% mutate(attr = attr %>% ordered())
-# colnames(data_females)[1]<-"CASE"
-# 
-# #Dichotomise CSBD, PPCS_6 because they have not enough cases per bin to cluster it in quantiles. The names of the factor levels show where the cut was set.
-# data_females <- data_females %>% mutate(PPCS_6 = cut_number(data_females$PPCS_6, n=2) %>% ordered(), CSBD = cut_number(data_females$CSBD, n=2) %>% ordered())
-
-# #Clean up
-# rm(f_factor)
-
 #Descriptives for males
 desc_m <- tidySEM::descriptives(data_males %>% select(-CASE))
 desc_m <- desc_m %>% select(name, type, n, missing, unique, mode, mode_value, v)
-
-# #Descriptives for females
-# desc_f <- tidySEM::descriptives(data_females %>% select(-CASE))
-# desc_f <- desc_f %>% select(name, type, n, missing, unique, mode, mode_value, v)
 ```
 
 __Table A__
@@ -89,14 +66,14 @@ __Table A__
 *Descriptives for the Newly Categorised Scales*
 ```{r descriptives}
 # #Create vector with rownames
-# Variable <- c("Sexual interest in children", "CSBD-7", "LON", "Mating effort", "Mating value", "PPCS-6", "Sex drive", "Social anxiety")
+# Variable <- c("Sexual interest in children", "CSBD-7", "LON", "Mating effort", "Mate value", "PPCS-6", "Sex drive", "Social anxiety")
 # #Merge male and female descriptives tables
 # desc <- merge(desc_m, desc_f, by="name")
 # #Bind Variable column to the beginning
 # desc <- cbind(Variable, desc)
 
 #Create vector with rownames
-Scale <- c("Attraction to children", "Compulsive sex.", "Loneliness", "Mating effort", "Mating value", "Probl. porn use", "Sex drive", "Social anxiety")
+Scale <- c("Attraction to children", "Compulsive sex.", "Loneliness", "Mating effort", "Mate value", "Probl. porn use", "Sex drive", "Social anxiety")
 #Bind Variable column to the beginning
 desc_m <- cbind(Scale, desc_m[, -1])
 
@@ -112,12 +89,6 @@ flextable(desc_m %>% select(-"type", -"missing")) %>%
 
 <!--There are no missings, which is nice. With most variables we can observe that the quantile binning worked well (according to the v-values), except for the attraction to children variable. Even dichotomised too few few people report anything other than that they are completely unattracted to children. 
 
-Then females: 
-```{r show_desc_f, echo=FALSE}
-desc_f
-```
--->
-<!--
 # Performing LCA
 
 We begin with the data set comprised of males.
@@ -196,6 +167,7 @@ flextable(lca_fit) %>%
 <!--__Inverse entropy__ is a measure of high class separability. Values close to 1 are desirable. @weller_latent_2020 refer to a cut_off value of at least .8 and comment that, although no agreed-upon cut-off value for entropy exists, one will have problems publishing a solution with entropy values as low as .6. @nylund-gibson_ten_2018 also refer to a cut-off value of .8, but see @clark2009relating. __Class separability__ is often inversely related to model fit, and is not used in model selection. However, it should still be a relevant criterion for model evaluation, as it affects assessment of the usefulness of the model - what use are classes that cannot be well discerned @masyn_latent_2013?. Values around our values are associated with a misclassification rate of around 20% for the assignment to the correct class @wang2017performance. This insecurity can project into further analyses with the latent classes, so that higher inverse entropy values lead to higher replication of correct effects of class membership on distal outcomes @clark2009relating. In our case the problematic values for class separability might relate to differences between how well the different scales can distinguish between the classes in the sample. That warrants a closer inspection of the posterior item probabilities.
 
 __Prob_min__ and __Prob_max__ give the range of the posterior classification probabilities. These values should be high.
+
 ```{r avePP_m, echo=F}
 class_prob(lca_final_model_m, type="avg.mostlikely")
 ```
@@ -220,7 +192,7 @@ __Table C__
 *Conditional Item Probabilities for the Three-Class Model*
 ```{r prob_table_m, echo=F}
 #Make table presentable
-prob_table_LCA_m$Variable <- c(rep(c("Sex drive", "Compulsive sex.", "Probl. porn use", "Mating effort", "Social anxiety", "Loneliness", "Mating value", "Attraction to children"), each=4))[1:nrow(prob_table_LCA_m)]
+prob_table_LCA_m$Variable <- c(rep(c("Sex drive", "Compulsive sex.", "Probl. porn use", "Mating effort", "Social anxiety", "Loneliness", "Mate value", "Attraction to children"), each=4))[1:nrow(prob_table_LCA_m)]
 #Pretty display
 flextable(prob_table_LCA_m) %>%
   set_formatter(Probability.class1=function(x) format(round(x, 2), nsmall=2),
@@ -238,71 +210,14 @@ Figure C shows the conditional item probabilities in a more accessible way.
 __Figure C__
 
 *Conditional Item Probabilities per Class*
-```{r prob_plot_m, echo=F, fig.width=12}
+```{r prob_plot_m, fig.width=12}
 plot_prob(lca_final_model_m) +
   scale_fill_grey(start = 0.9, end = 0.5, aesthetics = "fill") +
-  scale_x_discrete(labels=c("attr"="Attraction to children", "CSBD"="Compulsive sex.", "lon"="Loneliness", "meffort"="Mating effort", "mvalue"="Mating value", "PPCS_6"="Probl. porn use", "sexdrive2"="Sex drive", "socialanx"="Social anxiety")) +
+  scale_x_discrete(labels=c("attr"="Attraction to children", "CSBD"="Compulsive sex.", "lon"="Loneliness", "meffort"="Mating effort", "mvalue"="Mate value", "PPCS_6"="Probl. porn use", "sexdrive2"="Sex drive", "socialanx"="Social anxiety")) +
   labs(x="") +
   theme_classic() +
   theme(axis.text.x=element_text(angle=65, hjust=1, size=10))
 ```
-
-<!--## Females
-
-Now we redo the analysis with the subset of female participants. The cutoff values for fit indices obviously stay the same. It should be noted that two more variables needed to be dichotomised in the female sample, because they were also to skewed to form quantiles. Those were PPCS and CSBD.
-```{r LCA_females, eval=F, include=F}
-#We carry on with a LCA on the female sample. We stay with a maximum of seven clusters.
-
-lca_models_f <- mx_lca(data=data_females %>% select(-CASE), classes=1:7)
-
-#If non-convergence. Use mxTryHardOrdinal()
-
-lca_fit_f <- table_fit(lca_models_f) %>% select(Name, LL, n, Parameters, BIC, Entropy, prob_min, prob_max, n_min, np_ratio, np_local)
-
-#Entropy coeffient shows that the classes are not well separated. https://doi.org/10.1177/009579842093093 recommend a value of at least .8 and state that an LCA with an entropy coefficient lower than .6 will be har to publish.
-
-LR_lca_f <- lr_lmr(lca_models_f)
-
-lca_final_model_f <- lca_models_f[[3]] #x is the class enumaration of choice
-
-#Check tge 
-table_LCA_f <- table_results(lca_final_model_f)
-
-prob_table_LCA_f <- table_prob(lca_final_model_f)
-prob_table_LCA_f <- reshape(prob_table_LCA_f, direction="wide", v.names="Probability", timevar="group", idvar = c("Variable", "Category"))
-```
-
-### Scree Plot Females
-```{r scree_plot_f, eval=F}
-plot(lca_fit_f)
-```
-
-### Class Proportions Females
-```{r class_proportion_f, eval=F}
-#class proportions
-class_prob_lca_f <- class_prob(lca_final_model_f, "sum.posterior")
-class_prob_lca_f
-```
-
-### Fit Table Females
-```{r showfittable_f, eval=FA}
-lca_fit_f
-```
-
-### AvePP by Most Likely Class for Females
-```{r avePP_f, eval=F}
-class_prob(lca_final_model_f, type="avg.mostlikely")
-```
-
-### Conditional Item Probabilities for Females
-```{r prob_table_f, eval=F}
-prob_table_LCA_f
-```
-
-```{r prob_plot_f, eval=F, fig.width=12}
-plot_prob(lca_final_model_f)
-```
--->
 
 # __Distal Outcomes Analyses__
 
@@ -543,42 +458,8 @@ plot_results_2 <- results %>%
   pivot_longer(cols=starts_with("odds"), names_to="class", values_to="odds") 
 #Rename class column
 plot_results_2$class <- rep(1:3, nrow(plot_results_2)/3)
-#Make a list of barplots with odds < 1
-plots <- lapply(plot_results$Proclivity %>% unique(), function(x){
-  ggplot(plot_results %>% filter(Proclivity == x), aes(x=class, y=odds, fill=as.factor(class))) +
-  scale_fill_manual(name=NULL, values=c("#CCCCCC", "#999999", "#666666")) +
-  geom_bar(stat="identity", position="dodge") +
-  scale_y_continuous(breaks=c(0.0, 0.5, 1.0), limits=c(0,1)) +
-  xlab("") +
-  ylab("") +
-  theme_classic() +
-  theme(legend.position="none")
-})
-#Make a list of barplots with odds > 1
-plots_2 <- lapply(plot_results_2$Proclivity %>% unique(), function(x){
-  ggplot(plot_results_2 %>% filter(Proclivity == x), aes(x=class, y=odds, fill=as.factor(class))) +
-  scale_fill_manual(name=NULL, values=c("#CCCCCC", "#999999", "#666666")) +
-  geom_bar(stat="identity", position="dodge") +
-  xlab("") +
-  ylab("") +
-  theme_classic() +
-  theme(legend.position="none")
-  })
-#Manually add scale labels to the "outer" plots
-plots[[1]] <- plots[[1]] + ylab("Odds")
-plots[[7]] <- plots[[7]] + ylab("Odds")
-plots[[1]] <- plots[[1]] + ylab("Odds")
-plots[[7]] <- plots[[7]] + ylab("Odds")
-plots[[12]] <- plots[[12]] + xlab("Class")
-plots[[13]] <- plots[[13]] + xlab("Class") + ylab("Odds")
-plots[[14]] <- plots[[14]] + xlab("Class")
-plots_2[[1]] <- plots_2[[1]] + xlab("Class")
-plots_2[[2]] <- plots_2[[2]] + xlab("Class")
-plots_2[[3]] <- plots_2[[3]] + xlab("Class")
-#Arrange all barplots in a grid
-ggarrange(plotlist=c(plots, plots_2), ncol=6, nrow=3)
 
-#Alternative: line plots
+#Line plots
 #Odds < 1
 ggplot(plot_results, aes(x=Proclivity, y=odds, group=as.factor(class), linetype=as.factor(class))) +
   geom_line() +
@@ -597,11 +478,47 @@ ggplot(plot_results_2, aes(x=Proclivity, y=odds, group=as.factor(class), linetyp
   guides(shape="none") +
   theme_classic() +
   theme(axis.text.x=element_text(angle=45, hjust=1, size=8))
+
+# #Alternative: bar plots
+# #Make a list of barplots with odds < 1
+# plots <- lapply(plot_results$Proclivity %>% unique(), function(x){
+#   ggplot(plot_results %>% filter(Proclivity == x), aes(x=class, y=odds, fill=as.factor(class))) +
+#   scale_fill_manual(name=NULL, values=c("#CCCCCC", "#999999", "#666666")) +
+#   geom_bar(stat="identity", position="dodge") +
+#   scale_y_continuous(breaks=c(0.0, 0.5, 1.0), limits=c(0,1)) +
+#   xlab("") +
+#   ylab("") +
+#   theme_classic() +
+#   theme(legend.position="none")
+# })
+# #Make a list of barplots with odds > 1
+# plots_2 <- lapply(plot_results_2$Proclivity %>% unique(), function(x){
+#   ggplot(plot_results_2 %>% filter(Proclivity == x), aes(x=class, y=odds, fill=as.factor(class))) +
+#   scale_fill_manual(name=NULL, values=c("#CCCCCC", "#999999", "#666666")) +
+#   geom_bar(stat="identity", position="dodge") +
+#   xlab("") +
+#   ylab("") +
+#   theme_classic() +
+#   theme(legend.position="none")
+#   })
+# #Manually add scale labels to the "outer" plots
+# plots[[1]] <- plots[[1]] + ylab("Odds")
+# plots[[7]] <- plots[[7]] + ylab("Odds")
+# plots[[1]] <- plots[[1]] + ylab("Odds")
+# plots[[7]] <- plots[[7]] + ylab("Odds")
+# plots[[12]] <- plots[[12]] + xlab("Class")
+# plots[[13]] <- plots[[13]] + xlab("Class") + ylab("Odds")
+# plots[[14]] <- plots[[14]] + xlab("Class")
+# plots_2[[1]] <- plots_2[[1]] + xlab("Class")
+# plots_2[[2]] <- plots_2[[2]] + xlab("Class")
+# plots_2[[3]] <- plots_2[[3]] + xlab("Class")
+# #Arrange all barplots in a grid
+# ggarrange(plotlist=c(plots, plots_2), ncol=6, nrow=3)
 ```
 
 
-
-```{r young_persons_analysis}
+<!-- We re-did the BCH analysis for young-person proclivity items only with the participants whose definition of a young person included people under 18.
+```{r young_persons_analysis, eval=F}
 
 CASE_yp <-  haven::read_spss("./data/data raw/dataE_2112.sav") %>% filter(gender == 2)  %>% filter(range_young1 < 15) %>% dplyr::select(CASE) %>% unlist()
 
@@ -623,8 +540,33 @@ logregs_yp_0.01 <- lapply(Yp_models, function(x){
     flic()
 })
 
+#Put relevant results in a table
+results <- cbind(Proclivity = c("Chat with a child", "Chat with a young person", "Chat with a young person [reduced]", "Drive under influence", "Make a gift to a child", "Make a gift to a young person", "Make a gift to a young person [reduced]", "Kill someone", "Watch CSEM", "Watch CSEM on the darknet", "Watch porn with a young person", "Watch porn with a young person [reduced]", "Have sex with a prostitute", "Watch porn in public", "Rape someone", "Rob a bank", "Have sex with a child", "Have sex with a young person", "Have sex with a young person [reduced]", "Drive over the speed limit", "Have sex with an animal"), BCH_results_parameters %>% 
+                   # filter(!outcomes %in% c("Y_proclChatYp_r", "Y_proclGiftYp_r", "Y_proclPornYp_r", "Y_proclSexYp_r")) %>% 
+                 select(ends_with("total_0.01"), starts_with("b") & ends_with("0.01"), starts_with("p") & ends_with("0.01"), starts_with("ci") & ends_with("0.01")))
+#Create extra columns with CIs
+results$CI_intercept <- paste0("[", format(round(exp(results$ci_l_intercept_0.01), 2), nsmall=2), ", ", format(round(exp(results$ci_r_intercept_0.01), 2), nsmall=2), "]")
+results$CI_class1 <- paste0("[", format(round(exp(results$ci_l_predicted_class_1_0.01), 2), nsmall=2), ", ", format(round(exp(results$ci_r_predicted_class_1_0.01), 2), nsmall=2), "]")
+results$CI_class2 <- paste0("[", format(round(exp(results$ci_l_predicted_class_2_0.01), 2), nsmall=2), ", ", format(round(exp(results$ci_r_predicted_class_2_0.01), 2), nsmall=2), "]")
+#Add odds for each class
+results <- results %>% mutate(odds_predicted_class_1_0.01 = exp(results$b_intercept_0.01)*exp(results$b_predicted_class_1_0.01), 
+                              odds_predicted_class_2_0.01 = exp(results$b_intercept_0.01)*exp(results$b_predicted_class_2_0.01),
+                              odds_predicted_class_3_0.01 = exp(results$b_intercept_0.01))
+#Pretty output
+flextable(results, col_keys=c("Proclivity", "p_lr_total_0.01", "b_intercept_0.01", "CI_intercept", "p_lr_intercept_0.01", "b_predicted_class_1_0.01", "CI_class1", "p_lr_predicted_class_1_0.01", "b_predicted_class_2_0.01", "CI_class2", "p_lr_predicted_class_2_0.01")) %>% 
+  set_formatter(p_lr_total_0.01=function(x) apa(x, decimals=3, leading=F), 
+                b_intercept_0.01=function(x) format(round(exp(x), 2), nsmall=2), #transform into OR with exp()
+                p_lr_intercept_0.01=function(x) apa(x, decimals=3, leading=F),
+                b_predicted_class_1_0.01=function(x) format(round(exp(x), 2), nsmall=2), 
+                p_lr_predicted_class_1_0.01=function(x) apa(x, decimals=3, leading=F),
+                b_predicted_class_2_0.01=function(x) format(round(exp(x), 2), nsmall=2), 
+                p_lr_predicted_class_2_0.01=function(x) apa(x, decimals=3, leading=F)) %>%
+  set_header_labels(p_lr_total_0.01="p", b_intercept_0.01="Odds", CI_intercept="CI", p_lr_intercept_0.01="p", b_predicted_class_1_0.01="OR", CI_class1="CI", p_lr_predicted_class_1_0.01="p", b_predicted_class_2_0.01="OR", CI_class2="CI", p_lr_predicted_class_2_0.01="p") %>%
+  add_header_row(values=c("", "Global LRT", "(Intercept)", "Class 1", "Class 2"), colwidths=c(1, 1, 3, 3, 3)) %>% 
+  theme_booktabs() %>%
+  autofit()
 ```
-
+-->
 
 
 # __References__

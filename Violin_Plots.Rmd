@@ -32,9 +32,6 @@ load(".RData")
 
 #We use gender instead of sex. A 2 represents a male. We want to only grab males. 
 data_males <- haven::read_spss("./data/data raw/dataE_2112.sav") %>% dplyr::select(gender, CASE, sexdrive2, CSBD, PPCS_6, meffort, socialanx, lon, mvalue, attr) %>% filter(gender == 2) %>% dplyr::select(-gender)
-
-# #The same for females
-# data_females <- haven::read_spss("./data/data raw/dataE_2112.sav") %>% dplyr::select(gender, CASE, sexdrive2, CSBD, PPCS_6, meffort, socialanx, lon, mvalue, attr) %>% filter(gender == 1) %>% dplyr::select(-gender)
 ```
 
 Figure A shows the distributions of all motivational factors used for the analyses in the present study. As some of the distributions were rather skewed, quantiles are included (except for sexual interest in children).
@@ -61,7 +58,7 @@ ggplot(plotd_m %>% filter(var!="attr"), aes(x=as.factor(var), y=score, fill=var)
   geom_errorbar(data=quant_m, aes(x=as.factor(var), ymin=value, ymax=value, linetype="Quantiles"), inherit.aes=F, linewidth=.5, width=.3, position=position_nudge(x=.15)) +
   scale_linetype_manual(values="solid") +
   guides(linetype=guide_legend(""), fill="none") +
-  scale_x_discrete(labels=c("CSBD"="Compulsive sex.", "lon"="Loneliness", "meffort"="Mating effort", "mvalue"="Mating value", "PPCS_6"="Probl. porn use", "sexdrive2"="Sex drive", "socialanx"="Social anxiety")) +
+  scale_x_discrete(labels=c("CSBD"="Compulsive sex.", "lon"="Loneliness", "meffort"="Mating effort", "mvalue"="Mate value", "PPCS_6"="Probl. porn use", "sexdrive2"="Sex drive", "socialanx"="Social anxiety")) +
   labs(x="", y="Value") +
   theme_classic() +
   theme(axis.text.x=element_text(angle=45, hjust=1, size=10))
@@ -72,42 +69,3 @@ ggplot(plotd_m %>% filter(var=="attr"), aes(x=score)) +
   labs(x="Attraction to children", y="Count")
 ```
 
-```{r plot women, echo=F, fig.width=12, eval=F}
-#create long data frame for plotting, including only the relevant variables
-plotd_f <- data_females %>% select(CASE, sexdrive2, CSBD, PPCS_6, meffort, socialanx, lon, mvalue, attr) %>% pivot_longer(cols=sexdrive2:attr, names_to="var", values_to="score")
-#create a table with the quantiles for each variable (except CSBD & PPCS_6)
-quant_f <- as.data.frame(t(do.call(rbind.data.frame, (lapply(c("lon", "meffort", "mvalue", "sexdrive2", "socialanx"), function(x){parse_number(gsub(",.*$", "", levels(cut_number(as.data.frame(data_females)[, x], 4))))})))))
-#rename columns
-colnames(quant_f) <- c("lon", "meffort", "mvalue", "sexdrive2", "socialanx")
-#pivot for plotting
-quant_f <- pivot_longer(quant_f, cols=lon:socialanx, names_to='var')
-#add CSBD & PPCS_6 manually because they can only be dichotomised
-quant_f <- rbind(quant_f, pivot_longer(as.data.frame(t(do.call(rbind.data.frame, (lapply(c("CSBD", "PPCS_6"), function(x){parse_number(gsub(",.*$", "", levels(cut_number(as.data.frame(data_females)[, x], 2))))}))))), cols=V1:V2, names_to='var'))
-#rename variables
-quant_f$var[quant_f$var=="V1"] <- "CSBD"
-quant_f$var[quant_f$var=="V2"] <- "PPCS_6"
-#call on function in other R script
-source("./functions/flat_violin.R")
-#plot
-g3 <- ggplot(plotd_f %>% filter(var!="attr"), aes(x=as.factor(var), y=score, fill=var)) +
-  geom_flat_violin(scale="width") +
-  scale_fill_manual(values=c("#444444", "#4d4d4d", "#666666", "#999999", "#b3b3b3", "#bfbfbf", "#cccccc")) +
-  geom_dotplot(binaxis="y", dotsize=.04, stackdir="down", binwidth=.3, position=position_nudge(-.025)) +
-  geom_errorbar(data=quant_f, aes(x=as.factor(var), ymin=value, ymax=value, linetype="quantiles"), inherit.aes=F, linewidth=.5, width=.3, position=position_nudge(x=.15)) +
-  scale_linetype_manual(values="solid") +
-  guides(linetype=guide_legend(""), fill="none") +
-  labs(x="", y="value") +
-  theme_classic()
-#plot attraction to children separately
-g4 <- ggplot(plotd_f %>% filter(var=="attr"), aes(x=score)) +
-  geom_bar() +
-  theme_classic() +
-  labs(x="attraction to children", y="count")
-#arrange plots
-ggarrange(g3, g4, ncol=2, nrow=1, widths=c(1.6, 1))
-#clean up
-rm(g1)
-rm(g2)
-rm(g3)
-rm(g4)
-```
