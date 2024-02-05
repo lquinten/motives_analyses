@@ -30,13 +30,15 @@ rm(packages)
 load(".RData")
 ```
 
-# __Latent Class Analysis__
+# **Latent Class Analysis**
 
+```{=html}
 <!--We begin by loading the required data set ("dataE_2112.sav") into R. The selected variables are: gender, CASE, sexdrive2, CSBD, PPCS_6, meffort, socialanx, lon, mvalue, attr
 
 The data set is split into one data frame for men and one for women, which are analysed separately, after the initial approach (i.e. investigating both genders at once with an LPA and OPTICS) did not result in an interpretable solution.
 
 The performed analyses are exploratory. -->
+```
 ```{r data, include=F}
 #We use gender instead of sex. A 2 represents a male. We want to only grab males. 
 data_males <- haven::read_spss("./data/data raw/dataE_2112.sav") %>% dplyr::select(gender, CASE, sexdrive2, CSBD, PPCS_6, meffort, socialanx, lon, mvalue, attr) %>% filter(gender == 2) %>% dplyr::select(-gender)
@@ -61,9 +63,10 @@ desc_m <- tidySEM::descriptives(data_males %>% select(-CASE))
 desc_m <- desc_m %>% select(name, type, n, missing, unique, mode, mode_value, v)
 ```
 
-__Table A__
+**Table A**
 
 *Descriptives for the Newly Categorised Scales*
+
 ```{r descriptives}
 # #Create vector with rownames
 # Variable <- c("Sexual interest in children", "CSBD-7", "LON", "Mating effort", "Mate value", "PPCS-6", "Sex drive", "Social anxiety")
@@ -85,8 +88,10 @@ flextable(desc_m %>% select(-"type", -"missing")) %>%
   theme_booktabs() %>%
   autofit()
 ```
+
 *Note.* Mode refers to how many participants share this modal value. v is a measure of variability for categorical variables and refers to the probability that two randomly drawn participants belong to different categories. Round parentheses are exclusive boundaries, square brackets are inclusive boundaries.
 
+```{=html}
 <!--There are no missings, which is nice. With most variables we can observe that the quantile binning worked well (according to the v-values), except for the attraction to children variable. Even dichotomised too few few people report anything other than that they are completely unattracted to children. 
 
 # Performing LCA
@@ -99,6 +104,7 @@ The steps include:
   3. Model interpretation
 
 ## Males -->
+```
 ```{r LCA_males, eval=F, include=F}
 #We start with constructing an LCA model for the people who reported a male gender identity. The consensus was to expect up to 7 clusters, because of the seven initial motivations and the original answering categories in the questionnaire. Very likely 7 clusters are way to many to reliably estimate parameters but we will see.
 
@@ -130,25 +136,28 @@ class_prob_lca_m <- class_prob(lca_final_model_m, "sum.posterior")
 
 Models with one to seven classes were estimated. For class enumeration, the Bayesian information criterion (BIC) is, according to simulation studies, the most reliable measure [@van_lissa_recommended_2023; @masyn_latent_2013]. It reached a minimum at three classes (see Figure B). Following Van Lissa et al. (2023), a likelihood ratio test (LRT) was not calculated to avoid biased results due to unmet conditions (see also @jeffries_note_2003). Instead, fit indices were inspected to assess how well the different models performed.
 
-__Figure B__
+**Figure B**
 
 *BIC Values for Different Numbers of Classes*
+
 ```{r scree_plot}
 plot(lca_fit)
 ```
 
+```{=html}
 <!-- We also tried to use Likelihood Ratio Tests for class enumeration, as they are often used together with fit indices such as the BIC, but encountered some problems. While the bootstrapped likelihood ratio test (which is sometimes recommended based on simulation studies) proved too computationally expensive for my home computer (with multiple days running time and no sign of the algorithm stopping), the Lo-Mendell-Rubin-LRT returned a warning and only NA values [@sinha_practitioners_2021; @van_lissa_recommended_2023]. The exact reason for this is still unclear. It might be that Vuong's distinguishability test, that is performed in the LMR-LRT procedure, came to the result that all models are actually indistinguishable [@merkle_testing_2016]. A solution with no clusters was also what was indicated by the OPTICS algorithm. We still need to verify the reason for the NA output. 
 However, @van_lissa_recommended_2023 advise to be cautious using LRTs, especially in exploratory LCA, because the conditions underlying the LRT are likely not met and the test results may be flawed or, as is the case with BLRTs, they depend heavily on the model specifications and should better be used in confirmatory settings; see also @jeffries_note_2003.
 
 We did not calculate a likelihood ratio test (LRT), as @van_lissa_recommended_2023 advise to be cautious using LRTs. This especially true in exploratory LCA because the conditions underlying the LRT are likely not met and the test results may be flawed or, as is the case with bootstrapped LRTs, they depend heavily on the model specifications and should better be used in confirmatory settings; see also @jeffries_note_2003.
 
 First, we inspect the fit_table to assess how well the models with different numbers of classes perform in that data set. We should always keep in mind that the fit indices give us only in-sample fit and should therefore be taken with a grain of salt. -->
-
+```
 Different fit indices for model evaluation are displayed in Table B. Inverse entropy as a measure of class separability was below the often used target minimum value of .80 for all models (e.g., @nylund-gibson_ten_2018; Weller et al., 2020). These results are associated with a misclassification rate of around 20% for the assignment to the correct class (Wang et al., 2017) and might relate to differences between how well the different scales can distinguish between the classes in the sample. Of all models with more than one class, the three-class solution scored the highest value (see Table B).
 
-__Table B__
+**Table B**
 
 *Fit Indices for Different Numbers of Classes*
+
 ```{r show_fit_table_m}
 flextable(lca_fit) %>%
   set_formatter(Entropy=function(x) format(round(x, 2), nsmall=2),
@@ -162,8 +171,10 @@ flextable(lca_fit) %>%
   theme_booktabs() %>%
   autofit()
 ```
-*Note.* Min prob and Min max are the minimum and maximum values (respectively) on the diagonal of the table of average posterior probabilities by most likely class membership. The higher these values, the better the model fit (recommended cut-off = .7; @masyn_latent_2013; @nylund-gibson_ten_2018). Min n is the proportion of participants that are assigned to the smallest class. NP ratio shows how many observations  are accessible for each parameter estimation on average @van_lissa_recommended_2023. Local NP refers to the number of cases per parameter in the smallest class and indicates how much data there are for each parameter. 
 
+*Note.* Min prob and Min max are the minimum and maximum values (respectively) on the diagonal of the table of average posterior probabilities by most likely class membership. The higher these values, the better the model fit (recommended cut-off = .7; @masyn_latent_2013; @nylund-gibson_ten_2018). Min n is the proportion of participants that are assigned to the smallest class. NP ratio shows how many observations are accessible for each parameter estimation on average @van_lissa_recommended_2023. Local NP refers to the number of cases per parameter in the smallest class and indicates how much data there are for each parameter.
+
+````{=html}
 <!--__Inverse entropy__ is a measure of high class separability. Values close to 1 are desirable. @weller_latent_2020 refer to a cut_off value of at least .8 and comment that, although no agreed-upon cut-off value for entropy exists, one will have problems publishing a solution with entropy values as low as .6. @nylund-gibson_ten_2018 also refer to a cut-off value of .8, but see @clark2009relating. __Class separability__ is often inversely related to model fit, and is not used in model selection. However, it should still be a relevant criterion for model evaluation, as it affects assessment of the usefulness of the model - what use are classes that cannot be well discerned @masyn_latent_2013?. Values around our values are associated with a misclassification rate of around 20% for the assignment to the correct class @wang2017performance. This insecurity can project into further analyses with the latent classes, so that higher inverse entropy values lead to higher replication of correct effects of class membership on distal outcomes @clark2009relating. In our case the problematic values for class separability might relate to differences between how well the different scales can distinguish between the classes in the sample. That warrants a closer inspection of the posterior item probabilities.
 
 __Prob_min__ and __Prob_max__ give the range of the posterior classification probabilities. These values should be high.
@@ -174,22 +185,26 @@ class_prob(lca_final_model_m, type="avg.mostlikely")
  
 The __average posterior probabilities by most likely class membership__ tell how high the posterior probabilities are on average for all individuals whose highest posterior probability points to a specific class. The off-diagonal can be viewed as a crude measure of misclassification error. 
 @masyn_latent_2013 suggest a .7 as a cut-off on the diagonal of the average posterior probabilities by most likely class membership matrix. @nylund-gibson_ten_2018 recommend .7 as well (via Nagin, 2005). However, @van_lissa_recommended_2023 remark that it is still necessary to extensively interpret the resulting matrix, no matter what cut-off values suggest. To that end, we would recommend looking at the whole distributions of posterior probabilities by most likely class instead of their first moment. -->
+````
 
 According to the BIC values, the model with three classes showed the best fit, while the fit indices for model evaluation confirmed that the fit was mostly acceptable, so that it was chosen for interpretation.
 
 The largest class is class 1 with 43.4% of all male participants (*n* = 548), followed by class 3 with 28.6% (*n* = 361), and class 2 with 28.0% (*n* = 354).
 
+````{=html}
 <!--Table C shows how many participants are in which class
 ```{r class proportion, echo=F}
 class_prob_lca_m
 ```
 -->
+````
 
-Table C displays conditional item probabilities for the three-class model, which are a measure for class homogeneity, with probabilities > .7 and < .3 showing homogeneity within the classes. This can help identify which items are useful for the separation of the classes.
+Table C displays conditional item probabilities for the three-class model, which are a measure for class homogeneity, with probabilities \> .7 and \< .3 showing homogeneity within the classes. This can help identify which items are useful for the separation of the classes.
 
-__Table C__
+**Table C**
 
 *Conditional Item Probabilities for the Three-Class Model*
+
 ```{r prob_table_m, echo=F}
 #Make table presentable
 prob_table_LCA_m$Variable <- c(rep(c("Sex drive", "Compulsive sex.", "Probl. porn use", "Mating effort", "Social anxiety", "Loneliness", "Mate value", "Attraction to children"), each=4))[1:nrow(prob_table_LCA_m)]
@@ -207,9 +222,10 @@ flextable(prob_table_LCA_m) %>%
 
 Figure C shows the conditional item probabilities in a more accessible way.
 
-__Figure C__
+**Figure C**
 
 *Conditional Item Probabilities per Class*
+
 ```{r prob_plot_m, fig.width=12}
 plot_prob(lca_final_model_m) +
   scale_fill_grey(start = 0.9, end = 0.5, aesthetics = "fill") +
@@ -219,23 +235,24 @@ plot_prob(lca_final_model_m) +
   theme(axis.text.x=element_text(angle=65, hjust=1, size=10))
 ```
 
-# __Distal Outcomes Analyses__
+# **Distal Outcomes Analyses**
 
-To test whether class membership is related to the proclivity for sexually deviant behaviours, distal outcomes analyses were performed with all single proclivity items. 
+To test whether class membership is related to the proclivity for sexually deviant behaviours, distal outcomes analyses were performed with all single proclivity items.
 
 Since class membership is measured imperfectly by a LCA, the assignment of participants to a class is associated with a certain amount of error. If this error is left unaccounted for and predicted class membership from a LCA is used as a predictor in subsequent analyses, bias is introduced. Multiple approaches have been proposed, by which the error associated with class assignment is taken into account. The so-called three-step approach will first fit an independent measurement model (here, the LCA without any covariates or outcomes), assign participants to latent classes, and then use the predicted classes as estimates for the latent classes (Bakk & Kuha, 2021). The important difference between naive and recommended three-step approaches is the employment of countermeasures at the second or third step to avoid the bias resulting from imperfect class assignments.
 
 The approach chosen here is known as modified Bolck-Croon-Hagenaars (BCH) approach and was developed by Bakk et al. (2013), building on and generalising the work of Vermunt et al. (2012). In this approach, complex sample weights are obtained for the participants and used in the estimation of the target model in ensuing analyses. However, the weighing resulted in negative weights, which is not uncommon when using the modified BCH approach (e.g. Vermunt, 2010), but can cause problems in the presence of low class separability, as found in the present analysis.
 
+```{=html}
 <!--The original data frame is modified, so that each participant is assigned to each possible class (i.e. each participant appears class-times in the analysis) and is weighted according to the probability of the class assignment each time they are entered in the analysis and a likelihood is computed.
 
 In our specific case, the weighing resulted in negative weights for each row in which a participant was not assigned to the class for which they had the largest posterior probability (as given by the independent LCA model). That is something that is not unlikely to happen. Multiple authors have reported of problems that can arise from such negative sample weights in the presence of low class separability (XXX, XXX). These often refer to negative variances in the outcome variables in SEM (Bakk et al., 2013). -->
-
+```
 Firth's logistic regression with intercept correction (FLIC) was chosen as a method of analysis for the dichotomised proclivity items, as the base rate for many of these items was extremely low and standard logistic regression is known to either underestimate the base rate of a rare outcome or to produce impossible regression weights (XXX). According to simulation studies, FLIC out performs other methods to correct logistic results (XXX).
 
-Even though FLIC allows for sample weights, the negative weights led to convergence problems. Therefore, we fixed all negative weights to a value close to zero (here, .01), which is also close to their original values. Thus, the weights for participants where they were assigned to any other class than their modal class assignment would still enter the analysis, but would not influence the estimation much. <!-- The original class weights can still be viewed in the BCH_expanded_dataframe, and it can be seen that although they were not-zero, they were still much closer to zero than the weights for the modal class assignments. My hope is, that the ad-hoc adjustment will therefore not change the estimations much. But it is nothing that we can be sure of. It is known, that analysis using BCH-adjusted samples produce underestimation of standard errors, which can lead to too progressive decisions in significance tests. Correction methods exist for the application in SEM contexts (XXX), but the immediate application for our analysis method is unclear.-->This will have introduced some bias in the regression weights and standard errors; however, it remains uncertain to which degree our inference statistics are affected by this. <!--The exploratory nature of our analysis probably validates not to further explore correction methods for inference statistics. Yet, we should be more cautious than ever in the interpretation of significant p-values close to the cut-off values. That is of course, in general a good practise but is now more important than usual. -->
- 
-```{r BCH_dataframe, include=F, eval=F}
+Even though FLIC allows for sample weights, the negative weights led to convergence problems. Therefore, we fixed all negative weights to a value close to zero (here, .01), which is also close to their original values. Thus, the weights for participants where they were assigned to any other class than their modal class assignment would still enter the analysis, but would not influence the estimation much. <!-- The original class weights can still be viewed in the BCH_expanded_dataframe, and it can be seen that although they were not-zero, they were still much closer to zero than the weights for the modal class assignments. My hope is, that the ad-hoc adjustment will therefore not change the estimations much. But it is nothing that we can be sure of. It is known, that analysis using BCH-adjusted samples produce underestimation of standard errors, which can lead to too progressive decisions in significance tests. Correction methods exist for the application in SEM contexts (XXX), but the immediate application for our analysis method is unclear.-->This will have introduced some bias in the regression weights and standard errors; however, it remains uncertain to which degree our inference statistics are affected by this. <!--The exploratory nature of our analysis probably validates not to further explore correction methods for inference statistics. Yet, we should be more cautious than ever in the interpretation of significant p-values close to the cut-off values. That is of course, in general a good practice but is now more important than usual. -->
+
+```{r BCH_dataframe, eval=F}
 #Load precoded functions
 source("./functions/D_matrix_modal.R")
 source("./functions/modal_weights.R")
@@ -273,7 +290,7 @@ BCH_expanded_dataframe <- fastDummies::dummy_cols(BCH_expanded_dataframe, select
 BCH_expanded_dataframe <- BCH_expanded_dataframe %>% full_join(y=haven::read_spss("./data/data raw/dataE_clear5 2209.sav") %>% filter(gender == 2) %>% select(CASE, starts_with("Y_") & ends_with("r")) %>% mutate(CASE = CASE %>% as.numeric()),by="CASE")
 ```
 
-Significance of regression weights was tested using a penalised LRT, as implemented by the R package logistf (Heinze et al., 2023), which was also used to estimate the FLIC models. To make the estimation for the model with the proclivity to have sex with a prostitute item possible, the iteratively weighted least squares method instead of the standard Newton-Raphson approach had to be used for optimisation. 
+Significance of regression weights was tested using a penalised LRT, as implemented by the R package logistf (Heinze et al., 2023), which was also used to estimate the FLIC models. To make the estimation for the model with the proclivity to have sex with a prostitute item possible, the iteratively weighted least squares method instead of the standard Newton-Raphson approach had to be used for optimisation.
 
 ```{r BCH_logreg, eval=F}
 #The Regression estimation appears to be not working with negative weights. I do not understand why this is neccessarily the case. We approach to ad-hoc solutions: 1. Fixing the negative weights to zero, 2. We fix the negative weights to 0.01. 
@@ -300,7 +317,6 @@ for (i in 1:17){
 }
 
 #Enter Extra Analysis for people who assumed young persons to be of an age range that is potentially problematic, i.e. <15. Extra analysis was inspired by information that people consuming tend to call victims young persons. 
-
 CASE_yp <-  haven::read_spss("./data/data raw/dataE_2112.sav") %>% filter(gender == 2)  %>% filter(range_young1 < 15) %>% dplyr::select(CASE) %>% unlist()
 
 BCH_expanded_dataframe %>% filter(CASE %in% CASE_yp) %>% select(contains("Youth"))
@@ -321,10 +337,8 @@ logregs_yp_0.01 <- lapply(Yp_models, function(x){
     flic()
 })
 
-
 ######Adapt Code for the extra analyses 
 #Set up a dataframe for the the outputs of the regression analysis. Each row corresponds to one item.
-
 BCH_results <- tibble(outcomes = c(colnames(BCH_expanded_dataframe %>% select(starts_with("Y_"))),paste(Yp_variables, "_red", sep="")))
 
 #Combine the results in a dataframe
@@ -345,7 +359,6 @@ lr_3_0.01 = lapply(BCH_results$models, logistftest, test=3, weights=BCH_expanded
 lr_total_0.01 = lapply(BCH_results$models, logistftest, weights=BCH_expanded_dataframe$modal_weight_3,control = logistf.control(fit="IRLS")))
 
 #We extract p-values from the likelihood ratio tests. 
-
 BCH_results <- BCH_results %>% mutate(
   p_1=lapply(BCH_results$lr_1, function(x){x$prob}) %>% unlist(),
   p2=lapply(BCH_results$lr_2, function(x){x$prob}) %>% unlist(),
@@ -411,7 +424,7 @@ BCH_results_parameters <-tibble(outcomes = BCH_results$outcomes,
 
 <!--Each model (either with negative weights = 0 or negative weights = 0.01) can be obtained in the BCH_results tibble. The results from likelihood ratio tests are found in the columns that begin with "lr_". 1 means that the intercept is tested against the full model, 2 means that predicted class 1 is tested against the full model, 3 means that predicted class 2 is tested against the full model, and total means that the complete model was tested against an intercept only model. The regression weights can be interpreted as the difference in logits (log-odds of the probability to not answer 0 on the proclivity items) between the high risk class and the other classes. In other words, the significance of a regression weight tells us that there is a significant difference between the high risk class and the other classes when it comes to proclivity.-->
 
-The predicted class 3 was chosen as the reference class because it contained the participants with the highest probabilities of being in high quantiles of the motivator scales. It can therefore be considered a “high risk”-class. Table D shows the odds and odds ratios (ORs) of the different models and classes. The odds indicate how much more likely it is for a member of the high- risk class to choose any answer other than zero on the respective proclivity items (e.g. participants in the-high risk class are 0.08 times more likely to show some proclivity to chat with a child). ORs indicate the change in odds for the respective class 1 or 2 compared to the high-risk class to choose any answer other than zero on the respective proclivity items (e.g. participants in class 1 have 0.20 times the odds of showing some proclivity to chat with a child compared to the high-risk group). Since CIs were obtained through a different method (Wald’s test statistic as is the default in the logistf package) than the p values (which were obtained via penalised LRTs), significance decisions between the two methods can differ. For the present analysis, the LRTs should be relied on because they are based on fewer assumptions than the Wald’s test statistic. The CIs should therefore interpreted with caution, as is indicated by our distal outcomes method.
+The predicted class 3 was chosen as the reference class because it contained the participants with the highest probabilities of being in high quantiles of the motivator scales. It can therefore be considered a "high risk"-class. Table D shows the odds and odds ratios (ORs) of the different models and classes. The odds indicate how much more likely it is for a member of the high- risk class to choose any answer other than zero on the respective proclivity items (e.g. participants in the-high risk class are 0.08 times more likely to show some proclivity to chat with a child). ORs indicate the change in odds for the respective class 1 or 2 compared to the high-risk class to choose any answer other than zero on the respective proclivity items (e.g. participants in class 1 have 0.20 times the odds of showing some proclivity to chat with a child compared to the high-risk group). Since CIs were obtained through a different method (Wald's test statistic as is the default in the logistf package) than the p values (which were obtained via penalised LRTs), significance decisions between the two methods can differ. For the present analysis, the LRTs should be relied on because they are based on fewer assumptions than the Wald's test statistic. The CIs should therefore interpreted with caution, as is indicated by our distal outcomes method.
 
 ```{r show_BCH_results}
 #Put relevant results in a table
@@ -435,11 +448,13 @@ results <- cbind(Proclivity = c("Flirting or having sexual conversations via cha
                  BCH_results_parameters %>% 
                    filter(!str_detect(outcomes, "_red")) %>% #we do not want to show the additional analyses for the young persons after all
                    # filter(!outcomes %in% c("Y_proclChatYp_r", "Y_proclGiftYp_r", "Y_proclPornYp_r", "Y_proclSexYp_r")) %>% 
-                 select(ends_with("total_0.01"), starts_with("b") & ends_with("0.01"), starts_with("p") & ends_with("0.01"), starts_with("ci") & ends_with("0.01")))
-#Create extra columns with CIs
-results$CI_intercept <- paste0("[", format(round(exp(results$ci_l_intercept_0.01), 2), nsmall=2), ", ", format(round(exp(results$ci_r_intercept_0.01), 2), nsmall=2), "]")
-results$CI_class1 <- paste0("[", format(round(exp(results$ci_l_predicted_class_1_0.01), 2), nsmall=2), ", ", format(round(exp(results$ci_r_predicted_class_1_0.01), 2), nsmall=2), "]")
-results$CI_class2 <- paste0("[", format(round(exp(results$ci_l_predicted_class_2_0.01), 2), nsmall=2), ", ", format(round(exp(results$ci_r_predicted_class_2_0.01), 2), nsmall=2), "]")
+                 select(ends_with("total_0.01"), starts_with("b") & ends_with("0.01"), starts_with("p") & ends_with("0.01")
+                        #, starts_with("ci") & ends_with("0.01")
+                        ))
+# #Create extra columns with CIs
+# results$CI_intercept <- paste0("[", format(round(exp(results$ci_l_intercept_0.01), 2), nsmall=2), ", ", format(round(exp(results$ci_r_intercept_0.01), 2), nsmall=2), "]")
+# results$CI_class1 <- paste0("[", format(round(exp(results$ci_l_predicted_class_1_0.01), 2), nsmall=2), ", ", format(round(exp(results$ci_r_predicted_class_1_0.01), 2), nsmall=2), "]")
+# results$CI_class2 <- paste0("[", format(round(exp(results$ci_l_predicted_class_2_0.01), 2), nsmall=2), ", ", format(round(exp(results$ci_r_predicted_class_2_0.01), 2), nsmall=2), "]")
 #Add odds for each class
 results <- results %>% mutate(odds_predicted_class_1_0.01 = exp(results$b_intercept_0.01)*exp(results$b_predicted_class_1_0.01), 
                               odds_predicted_class_2_0.01 = exp(results$b_intercept_0.01)*exp(results$b_predicted_class_2_0.01),
@@ -447,7 +462,13 @@ results <- results %>% mutate(odds_predicted_class_1_0.01 = exp(results$b_interc
 #Change order of rows for unity with other tables
 results <- results[c(10, 11, 12, 17, 7, 8, 1, 4, 14, 9, 2, 5, 15, 16, 3, 13, 6),]
 #Pretty output
-flextable(results, col_keys=c("Proclivity", "p_lr_total_0.01", "b_intercept_0.01", "CI_intercept", "p_lr_intercept_0.01", "b_predicted_class_1_0.01", "CI_class1", "p_lr_predicted_class_1_0.01", "b_predicted_class_2_0.01", "CI_class2", "p_lr_predicted_class_2_0.01")) %>% 
+flextable(results, col_keys=c("Proclivity", "p_lr_total_0.01", "b_intercept_0.01", 
+                              #"CI_intercept", 
+                              "p_lr_intercept_0.01", "b_predicted_class_1_0.01", 
+                              #"CI_class1", 
+                              "p_lr_predicted_class_1_0.01", "b_predicted_class_2_0.01", 
+                              #"CI_class2", 
+                              "p_lr_predicted_class_2_0.01")) %>% 
   set_formatter(p_lr_total_0.01=function(x) apa(x, decimals=3, leading=F), 
                 b_intercept_0.01=function(x) format(round(exp(x), 2), nsmall=2), #transform into OR with exp()
                 p_lr_intercept_0.01=function(x) apa(x, decimals=3, leading=F),
@@ -455,47 +476,65 @@ flextable(results, col_keys=c("Proclivity", "p_lr_total_0.01", "b_intercept_0.01
                 p_lr_predicted_class_1_0.01=function(x) apa(x, decimals=3, leading=F),
                 b_predicted_class_2_0.01=function(x) format(round(exp(x), 2), nsmall=2), 
                 p_lr_predicted_class_2_0.01=function(x) apa(x, decimals=3, leading=F)) %>%
-  set_header_labels(p_lr_total_0.01="p", b_intercept_0.01="Odds", CI_intercept="CI", p_lr_intercept_0.01="p", b_predicted_class_1_0.01="OR", CI_class1="CI", p_lr_predicted_class_1_0.01="p", b_predicted_class_2_0.01="OR", CI_class2="CI", p_lr_predicted_class_2_0.01="p") %>%
-  add_header_row(values=c("", "Global LRT", "(Intercept)", "Class 1", "Class 2"), colwidths=c(1, 1, 3, 3, 3)) %>% 
+  set_header_labels(p_lr_total_0.01="p", b_intercept_0.01="Odds", 
+                    #CI_intercept="CI", 
+                    p_lr_intercept_0.01="p", b_predicted_class_1_0.01="OR", 
+                    #CI_class1="CI", 
+                    p_lr_predicted_class_1_0.01="p", b_predicted_class_2_0.01="OR", 
+                    #CI_class2="CI", 
+                    p_lr_predicted_class_2_0.01="p") %>%
+  add_header_row(values=c("", "Global LRT", "(Intercept)", "Class 1", "Class 2"), colwidths=c(1, 1, 2, 2, 2)) %>% 
   theme_booktabs() %>%
   autofit()
 ```
-*Note.* Global LRT shows the *p* value of a test of the full against an intercept-only model. Penalised LRTs were used to obtain p values. Confidence intervals were computed using the Wald’s test statistics.
+
+*Note.* Global LRT shows the *p* value of a test of the full against an intercept-only model. Penalised LRTs were used to obtain p values. Confidence intervals are not included because they would have been less reliable than *p* values (see above).
 
 ```{r plot_proclivities}
+#rename proclivities for plotting
+procl <- c("Prostitute", "Public porn", "Rape", "Zoophilia", "Porn child", "Porn child darknet", "Chat child", "Gift child", "Sex child", "Porn YP", "Chat YP", "Gift YP", "Sex YP", "Speed", "DUI", "Rob", "Kill")
+#Rename proclivities
+plot_results <- results
+plot_results$Proclivity <- procl
+#Factorise items
+plot_results$Proclivity <- factor(plot_results$Proclivity, levels=plot_results$Proclivity)
 #Pivot results table for plotting
 #Only odds < 1 for better scaling
-plot_results <- results %>% 
-  select(Proclivity,starts_with("odds")) %>% 
+plot_results <- plot_results %>% 
+  select(Proclivity, starts_with("odds")) %>% 
   filter(odds_predicted_class_1_0.01 < 1 & odds_predicted_class_2_0.01 < 1 & odds_predicted_class_3_0.01 < 1) %>% 
-  pivot_longer(cols=starts_with("odds"), names_to="class", values_to="odds") 
+  pivot_longer(cols=starts_with("odds"), names_to="class", values_to="Odds") 
 #Rename class column
 plot_results$class <- rep(1:3, nrow(plot_results)/3)
 #Remaining odds > 1
-plot_results_2 <- results %>% 
-  select(Proclivity,starts_with("odds")) %>% 
+#Rename
+plot_results_2 <- results
+plot_results_2$Proclivity <- procl
+#Factorise
+plot_results_2$Proclivity <- factor(plot_results_2$Proclivity, levels=plot_results_2$Proclivity)
+#Pivot
+plot_results_2 <- plot_results_2 %>% 
+  select(Proclivity, starts_with("odds")) %>% 
   filter(odds_predicted_class_1_0.01 > 1 | odds_predicted_class_2_0.01 > 1 | odds_predicted_class_3_0.01 > 1) %>% 
-  pivot_longer(cols=starts_with("odds"), names_to="class", values_to="odds") 
+  pivot_longer(cols=starts_with("odds"), names_to="class", values_to="Odds") 
 #Rename class column
 plot_results_2$class <- rep(1:3, nrow(plot_results_2)/3)
 
 #Line plots
 #Odds < 1
-ggplot(plot_results, aes(x=Proclivity, y=odds, group=as.factor(class), linetype=as.factor(class))) +
+ggplot(plot_results, aes(x=Proclivity, y=Odds, group=as.factor(class), linetype=as.factor(class))) +
   geom_line() +
   geom_point(aes(shape=as.factor(class))) +
   scale_linetype_manual(name=NULL, values=c("dotted", "dashed", "solid"), labels=c("Class 1", "Class 2", "Class 3")) +
-  scale_shape_manual(name=NULL, values=c(0,  3, 1)) +
-  guides(shape="none") +
+  scale_shape_manual(name=NULL, values=c(3, 1, 0), labels=c("Class 1", "Class 2", "Class 3")) +
   theme_classic() +
   theme(axis.text.x=element_text(angle=45, hjust=1, size=8))
 #Odds > 1
-ggplot(plot_results_2, aes(x=Proclivity, y=odds, group=as.factor(class), linetype=as.factor(class))) +
+ggplot(plot_results_2, aes(x=Proclivity, y=Odds, group=as.factor(class), linetype=as.factor(class))) +
   geom_line() +
   geom_point(aes(shape=as.factor(class))) +
   scale_linetype_manual(name=NULL, values=c("dotted", "dashed", "solid"), labels=c("Class 1", "Class 2", "Class 3")) +
-  scale_shape_manual(name=NULL, values=c(0,  3, 1)) +
-  guides(shape="none") +
+  scale_shape_manual(name=NULL, values=c(3, 1, 0), labels=c("Class 1", "Class 2", "Class 3")) +
   theme_classic() +
   theme(axis.text.x=element_text(angle=45, hjust=1, size=8))
 
@@ -535,6 +574,8 @@ ggplot(plot_results_2, aes(x=Proclivity, y=odds, group=as.factor(class), linetyp
 # #Arrange all barplots in a grid
 # ggarrange(plotlist=c(plots, plots_2), ncol=6, nrow=3)
 ```
+
+*Note.* Public porn = "Watching porn in public spaces such as a bus or library", Rape = "Engaging in sexual activity with an adult who does not agree or is not able to agree, for example, due to intoxication", Zoophilia = "Engaging in sexual activity with an animal", Porn child = "Watching porn depicting a child", Porn child darknet = "Watching porn depicting a child on the Darknet", Chat child = "Flirting or having sexual conversations via chat or webcam with a child", Gift child = "Paying or giving gifts to a child for online sexual material (for example, videos, images, or online streaming)", Sex child = "Having offline sex or sexual contact with a child", Porn YP = "Watching porn depicting a young person", Chat YP = "Flirting or having sexual conversations via chat or webcam with a young person", Gift YP = "Paying or giving gifts to a young person for online sexual material (for example, videos, images, or online streaming", Sex YP = "Having offline sex or sexual contact with a young person", DUI = "Driving under the influence of drugs/alcohol", Kill = "Killing someone", Prostitute = "Engaging in sexual activity with a prostitute", Speed = "Driving faster than the posted speed limit", Rob = "Robbing a bank". Because of the high differences in odds, some of the items are displayed in a separate plot with a different scale.
 
 <!-- We re-did the BCH analysis for young-person proclivity items only with the participants whose definition of a young person included people under 18.
 ```{r young_persons_analysis, eval=F}
@@ -587,5 +628,4 @@ flextable(results, col_keys=c("Proclivity", "p_lr_total_0.01", "b_intercept_0.01
 ```
 -->
 
-
-# __References__
+# **References**

@@ -110,7 +110,7 @@ flextable(desc_f %>% select(-"type", -"missing")) %>%
   autofit()
 ```
 
-# LCA
+# Latent Class Analysis
 
 We redo the LCA with the subset of female participants. The cutoff values for fit indices obviously stay the same. It should be noted that two more variables needed to be dichotomised in the female sample, because they were also to skewed to form quantiles. Those were PPCS and CSBD.
 
@@ -148,7 +148,7 @@ Show the BIC values for the different numbers of classes. It is best for three c
 plot(lca_fit_f)
 ```
 
-The following table shows how many participants would be in which class.
+The following table shows how many participants are in which class.
 
 ```{r class proportion, echo=F}
 class_prob_lca_f
@@ -204,7 +204,258 @@ plot_prob(lca_final_model_f) +
   theme(axis.text.x=element_text(angle=65, hjust=1, size=10))
 ```
 
+The classes look very similar to those for the male participants. Class 1 is similar to the "high risk" class, class 2 is similar to the "high mate value" class, and class 3 is similar to the "social incompetence" class.
 
+# Distal Outcomes Analyses
+
+```{r BCH_dataframe, eval=F}
+#Load precoded functions
+source("./functions/D_matrix_modal.R")
+source("./functions/modal_weights.R")
+
+#Creating a dataframe with modal weights
+#First, extract posterior probabilities for class assignment and most likely class membership
+posteriors_f <- class_prob(lca_final_model_f, type="individual")$individual %>% as_tibble()
+
+#Compute the inverse D matrix as in Bakk et al. (2013)
+inverse_D_f <- solve(D_matrix_modal(posteriors_f))
+
+#Extract a vector with the most likely class memberships
+modal_assignments_f <- posteriors_f %>% select(predicted)
+
+#Use the modal_weights function to create modal weights from the inverse_D matrix and combine the results in a tibble with the posterior probabilities of class membership and the most likely class membership.
+BCH_expanded_dataframe_f <- tibble(posteriors_f, modal_weights(modal_assignments_f, inverse_D_f) %>% as_tibble())
+colnames(BCH_expanded_dataframe_f) <- c("postprob_class_1", "postprob_class_2", "postprob_class_3", "modal_class", "modal_weight_1", "modal_weight_2", "modal_weight_3")
+
+#Clean up
+rm(modal_assignments_f, inverse_D_f, posteriors_f)
+
+#Attach the CASE variable to our weighted dataframe. 
+BCH_expanded_dataframe_f <- BCH_expanded_dataframe_f %>% mutate(CASE = data_females$CASE)
+
+#We convert the expanded data frame from wide in long format, so that we can use it as an input for our further analyses. According to Bakk et al. (2016), each participant enters the analysis nclass times, each time differently weighted according to her class assignment. 
+BCH_expanded_dataframe_f <- BCH_expanded_dataframe_f %>% pivot_longer(cols=starts_with("modal_weight"), values_to = "modal_weight", names_to=NULL)
+
+#Create a variable that encodes the assumed class assignments for the BCH analysis
+BCH_expanded_dataframe_f <- BCH_expanded_dataframe_f %>% mutate(predicted_class = vctrs::vec_rep(1:3, nrow(data_females)))
+
+#Create dummy variables from this variable
+BCH_expanded_dataframe_f <- fastDummies::dummy_cols(BCH_expanded_dataframe_f, select_columns = "predicted_class")
+
+#Combine the expanded dataframe with the outcome variables
+BCH_expanded_dataframe_f <- BCH_expanded_dataframe_f %>% full_join(y=haven::read_spss("./data/data raw/dataE_clear5 2209.sav") %>% filter(gender == 1) %>% select(CASE, starts_with("Y_") & ends_with("r")) %>% mutate(CASE = CASE %>% as.numeric()), by="CASE")
+
+#The Regression estimation appears to be not working with negative weights. I do not understand why this is neccessarily the case. We approach to ad-hoc solutions: 1. Fixing the negative weights to zero, 2. We fix the negative weights to 0.01. 
+
+#Fixing negative weights to zero or nigh-zero
+BCH_expanded_dataframe_f <- BCH_expanded_dataframe_f %>% mutate(modal_weight_2 = case_when(BCH_expanded_dataframe_f$modal_weight < 0 ~ 0, .default = BCH_expanded_dataframe_f$modal_weight))
+BCH_expanded_dataframe_f <- BCH_expanded_dataframe_f %>% mutate(modal_weight_3 = case_when(BCH_expanded_dataframe_f$modal_weight < 0 ~ 0.01, .default = BCH_expanded_dataframe_f$modal_weight))
+
+#We prepare the model specifications for the Firth Regression to run.
+outcomes_f <- BCH_expanded_dataframe_f %>% select(starts_with("Y_")) %>% colnames()
+predictors_f <- BCH_expanded_dataframe_f %>% select(starts_with("predicted")) %>% select(-predicted_class, -predicted_class_1) %>% colnames() %>% paste(collapse=" + ")
+models_f <- paste(outcomes_f, "~", predictors_f, sep=" ")
+
+#Do Flic (Firth's regression with intercept correction) for the models in the list with weights fixed to zero.
+log_regs_f <- list()
+for (i in 1:17){
+  log_regs_f[[i]] <- logistf::logistf(formula=models_f[i], data = BCH_expanded_dataframe_f, model=TRUE, weights=BCH_expanded_dataframe_f$modal_weight_2) %>% flic()
+}
+
+##Do Flic for the models in the list with weights fixed to 0.01
+log_regs_min_f <- list()
+for (i in 1:17){
+  log_regs_min_f[[i]] <- logistf::logistf(formula=models_f[i], data = BCH_expanded_dataframe_f, control = logistf.control(fit="IRLS"), model=TRUE, weights=BCH_expanded_dataframe_f$modal_weight_3) %>% flic()
+}
+
+#Set up a dataframe for the the outputs of the regression analysis. Each row corresponds to one item.
+BCH_results_f <- tibble(outcomes = c(colnames(BCH_expanded_dataframe_f %>% select(starts_with("Y_")))))
+
+#Combine the results in a dataframe
+BCH_results_f <- BCH_results_f %>% mutate(models = log_regs_f)
+BCH_results_f <- BCH_results_f %>% mutate(models_0.01_weights = log_regs_min_f)
+
+#Because of the case weights we have to test the parameters manually via likelihood ratio tests
+BCH_results_f <- BCH_results_f %>% mutate(
+lr_1 = lapply(BCH_results_f$models, logistftest, test=1,
+              weights=BCH_expanded_dataframe_f$modal_weight_2),
+lr_2 = lapply(BCH_results_f$models, logistftest, test=2,
+              weights=BCH_expanded_dataframe_f$modal_weight_2),
+lr_3 = lapply(BCH_results_f$models, logistftest, test=3,
+              weights=BCH_expanded_dataframe_f$modal_weight_2),
+lr_total = lapply(BCH_results_f$models, logistftest, weights=BCH_expanded_dataframe_f$modal_weight_2, control=logistf.control(maxit=10000))) #We get a warning: Maximum number of iterations for null model exceeded. Neither increasing the maximum number of iterations nor using a different start value (by changing the seed) help.
+
+BCH_results_f <- BCH_results_f %>% mutate(
+lr_1_0.01 = lapply(BCH_results_f$models, logistftest, test=1,
+                   weights=BCH_expanded_dataframe_f$modal_weight_3, 
+                   control = logistf.control(fit="IRLS")),
+lr_2_0.01 = lapply(BCH_results_f$models, logistftest, test=2,
+                   weights=BCH_expanded_dataframe_f$modal_weight_3, 
+                   control = logistf.control(fit="IRLS")),
+lr_3_0.01 = lapply(BCH_results_f$models, logistftest, test=3,
+                   weights=BCH_expanded_dataframe_f$modal_weight_3, 
+                   control = logistf.control(fit="IRLS")),
+lr_total_0.01 = lapply(BCH_results_f$models, logistftest,
+                       weights=BCH_expanded_dataframe_f$modal_weight_3, 
+                       control = logistf.control(fit="IRLS")))
+
+#We extract p-values from the likelihood ratio tests. 
+BCH_results_f <- BCH_results_f %>% mutate(
+  p_1=lapply(BCH_results_f$lr_1, function(x){x$prob}) %>% unlist(),
+  p_2=lapply(BCH_results_f$lr_2, function(x){x$prob}) %>% unlist(),
+  p_3=lapply(BCH_results_f$lr_3, function(x){x$prob}) %>% unlist(),
+  p_1_0.01=lapply(BCH_results_f$lr_1_0.01, function(x){x$prob}) %>% unlist(),
+  p_2_0.01=lapply(BCH_results_f$lr_2_0.01, function(x){x$prob}) %>% unlist(),
+  p_3_0.01=lapply(BCH_results_f$lr_3_0.01, function(x){x$prob}) %>% unlist(),
+)
+
+#Order BCH_results
+BCH_results_f <- BCH_results_f[order(BCH_results_f$outcomes),]
+
+#Add parameter estimates
+#How to index the results_parameters table:
+#All regression weights start with "b",
+#All model output from the 0.01 weighted regression ends with "_0.01"
+#All lower confidence interval limits begin with ci_l
+#All upper confidence interval limits begin with ci_r
+#All lr-test p-values start with p_lr
+#Use tidyverse select functions 
+
+BCH_results_parameters_f <- tibble(outcomes = BCH_results_f$outcomes, 
+                                b_intercept = lapply(BCH_results_f$models, function(x){x$coefficients[1]}) %>% unlist(),
+                                b_predicted_class_2 = lapply(BCH_results_f$models, function(x){x$coefficients[2]}) %>% unlist(),
+                                b_predicted_class_3 =lapply(BCH_results_f$models, function(x){x$coefficients[3]}) %>% unlist(),
+                                b_intercept_0.01 = lapply(BCH_results_f$models_0.01_weights, function(x){x$coefficients[1]}) %>%
+                                  unlist(),
+                                b_predicted_class_2_0.01 = lapply(BCH_results_f$models_0.01_weights, function(x){x$coefficients[2]}) %>%
+                                  unlist(),
+                                b_predicted_class_3_0.01 = lapply(BCH_results_f$models_0.01_weights, function(x){x$coefficients[3]}) %>%
+                                  unlist(),
+                                ci_l_intercept = lapply(BCH_results_f$models, function(x){x$ci.lower[1]}) %>% unlist(),
+                                ci_l_predicted_class_2 =lapply(BCH_results_f$models, function(x){x$ci.lower[2]}) %>% unlist(),
+                                ci_l_predicted_class_3 =lapply(BCH_results_f$models, function(x){x$ci.lower[3]}) %>% unlist(),
+                                ci_l_intercept_0.01= lapply(BCH_results_f$models_0.01_weights, function(x){x$ci.lower[1]}) %>% unlist(),
+                                ci_l_predicted_class_2_0.01=lapply(BCH_results_f$models_0.01_weights, function(x){x$ci.lower[2]}) %>%
+                                  unlist(),
+                                ci_l_predicted_class_3_0.01=lapply(BCH_results_f$models_0.01_weights, function(x){x$ci.lower[3]}) %>%
+                                  unlist(),
+                                ci_r_intercept =lapply(BCH_results_f$models, function(x){x$ci.upper[1]}) %>% unlist(),
+                                ci_r_predicted_class_2=lapply(BCH_results_f$models, function(x){x$ci.upper[2]}) %>% unlist(),
+                                ci_r_predicted_class_3=lapply(BCH_results_f$models, function(x){x$ci.upper[3]}) %>% unlist(),
+                                ci_r_intercept_0.01 = lapply(BCH_results_f$models_0.01_weights, function(x){x$ci.upper[1]}) %>% unlist(),
+                                ci_r_predicted_class_2_0.01 = lapply(BCH_results_f$models_0.01_weights, function(x){x$ci.upper[2]}) %>%
+                                  unlist(),
+                                ci_r_predicted_class_3_0.01  = lapply(BCH_results_f$models_0.01_weights, function(x){x$ci.upper[3]}) %>%
+                                  unlist(),
+                                p_lr_intercept = lapply(BCH_results_f$lr_1, function(x){x$prob}) %>% unlist(),
+                                p_lr_predicted_class_2 = lapply(BCH_results_f$lr_2, function(x){x$prob}) %>% unlist(),
+                                p_lr_predicted_class_3 = lapply(BCH_results_f$lr_3, function(x){x$prob}) %>% unlist(),
+                                p_lr_intercept_0.01 = lapply(BCH_results_f$lr_1_0.01, function(x){x$prob}) %>% unlist(),
+                                p_lr_predicted_class_2_0.01 = lapply(BCH_results_f$lr_2_0.01, function(x){x$prob}) %>% unlist(),
+                                p_lr_predicted_class_3_0.01 = lapply(BCH_results_f$lr_3_0.01, function(x){x$prob}) %>% unlist(),
+                                p_lr_total = lapply(BCH_results_f$lr_total, function(x){x$prob}) %>% unlist(),
+                                p_lr_total_0.01 = lapply(BCH_results_f$lr_total_0.01, function(x){x$prob}) %>% unlist())
+
+# #Save output to RDS.
+# BCH_results_f %>% saveRDS(file="./out/BCH_results_f.RDS")
+# 
+# #Save Parameters Table to RDS
+# BCH_results_parameters_f %>% saveRDS(file="./out/BCH_results_parameters_f.RDS")
+```
+
+Predicted class 1 was chosen as the reference class because it can be interpreted as the "high risk" class.
+
+```{r show_BCH_results}
+#Put relevant results in a table
+results_f <- cbind(Proclivity = c("Flirting or having sexual conversations via chat or webcam with a child", #1
+                                "Flirting or having sexual conversations via chat or webcam with a young person", #2
+                                "Driving under the influence of drugs/alcohol", #3
+                                "Paying or giving gifts to a child for online sexual material (for example, videos, images, or online streaming)", #4
+                                "Paying or giving gifts to a young person for online sexual material (for example, videos, images, or online streaming", #5
+                                "Killing someone", #6
+                                "Watching porn depicting a child", #7
+                                "Watching porn depicting a child on the Darknet", #8
+                                "Watching porn depicting a young person", #9
+                                "Engaging in sexual activity with a prostitute", #10
+                                "Watching porn in public spaces such as a bus or library", #11
+                                "Engaging in sexual activity with an adult who does not agree or is not able to agree, for example, due to intoxication", #12
+                                "Robbing a bank", #13
+                                "Having offline sex or sexual contact with a child", #14
+                                "Having offline sex or sexual contact with a young person", #15
+                                "Driving faster than the posted speed limit", #16
+                                "Engaging in sexual activity with an animal"), #17
+                 BCH_results_parameters_f %>%
+                 select(ends_with("total_0.01"), starts_with("b") & ends_with("0.01"), starts_with("p") & ends_with("0.01")))
+#Add odds for each class
+results_f <- results_f %>% mutate(odds_predicted_class_2_0.01 = exp(results_f$b_intercept_0.01)*exp(results_f$b_predicted_class_2_0.01), 
+                              odds_predicted_class_3_0.01 = exp(results_f$b_intercept_0.01)*exp(results_f$b_predicted_class_3_0.01),
+                              odds_predicted_class_1_0.01 = exp(results_f$b_intercept_0.01))
+#Change order of rows for unity with other tables
+results_f <- results_f[c(10, 11, 12, 17, 7, 8, 1, 4, 14, 9, 2, 5, 15, 16, 3, 13, 6),]
+#Pretty output
+flextable(results_f, col_keys=c("Proclivity", "p_lr_total_0.01", "b_intercept_0.01", "p_lr_intercept_0.01", "b_predicted_class_2_0.01", "p_lr_predicted_class_2_0.01", "b_predicted_class_3_0.01", "p_lr_predicted_class_3_0.01")) %>% 
+  set_formatter(p_lr_total_0.01=function(x) apa(x, decimals=3, leading=F), 
+                b_intercept_0.01=function(x) format(round(exp(x), 2), nsmall=2), #transform into OR with exp()
+                p_lr_intercept_0.01=function(x) apa(x, decimals=3, leading=F),
+                b_predicted_class_2_0.01=function(x) format(round(exp(x), 2), nsmall=2), 
+                p_lr_predicted_class_2_0.01=function(x) apa(x, decimals=3, leading=F),
+                b_predicted_class_3_0.01=function(x) format(round(exp(x), 2), nsmall=2), 
+                p_lr_predicted_class_3_0.01=function(x) apa(x, decimals=3, leading=F)) %>%
+  set_header_labels(p_lr_total_0.01="p", b_intercept_0.01="Odds", p_lr_intercept_0.01="p", b_predicted_class_2_0.01="OR", p_lr_predicted_class_2_0.01="p", b_predicted_class_3_0.01="OR", p_lr_predicted_class_3_0.01="p") %>%
+  add_header_row(values=c("", "Global LRT", "(Intercept)", "Class 2", "Class 3"), colwidths=c(1, 1, 2, 2, 2)) %>% 
+  theme_booktabs() %>%
+  autofit()
+```
+
+```{r plot_proclivities}
+#rename proclivities for plotting
+procl <- c("Prostitute", "Public porn", "Rape", "Zoophilia", "Porn child", "Porn child darknet", "Chat child", "Gift child", "Sex child", "Porn YP", "Chat YP", "Gift YP", "Sex YP", "Speed", "DUI", "Rob", "Kill")
+#Rename proclivities
+plot_results_f <- results_f
+plot_results_f$Proclivity <- procl
+#Factorise items
+plot_results_f$Proclivity <- factor(plot_results_f$Proclivity, levels=plot_results_f$Proclivity)
+#Pivot results table for plotting
+#Only odds < 1 for better scaling
+plot_results_f <- plot_results_f %>% 
+  select(Proclivity, starts_with("odds")) %>% 
+  filter(odds_predicted_class_1_0.01 < 1 & odds_predicted_class_2_0.01 < 1 & odds_predicted_class_3_0.01 < 1) %>% 
+  pivot_longer(cols=starts_with("odds"), names_to="class", values_to="odds") 
+#Rename class column
+plot_results_f$class <- rep(c(2, 3, 1), nrow(plot_results_f)/3)
+#Remaining odds > 1
+#Rename
+plot_results_2_f <- results_f
+plot_results_2_f$Proclivity <- procl
+#Factorise
+plot_results_2_f$Proclivity <- factor(plot_results_2_f$Proclivity, levels=plot_results_2_f$Proclivity)
+#Pivot
+plot_results_2_f <- plot_results_2_f %>% 
+  select(Proclivity, starts_with("odds")) %>% 
+  filter(odds_predicted_class_1_0.01 > 1 | odds_predicted_class_2_0.01 > 1 | odds_predicted_class_3_0.01 > 1) %>% 
+  pivot_longer(cols=starts_with("odds"), names_to="class", values_to="odds") 
+#Rename class column
+plot_results_2_f$class <- rep(c(2, 3, 1), nrow(plot_results_2_f)/3)
+
+#Line plots
+#Odds < 1
+ggplot(plot_results_f, aes(x=Proclivity, y=odds, group=as.factor(class), linetype=as.factor(class))) +
+  geom_line() +
+  geom_point(aes(shape=as.factor(class))) +
+  scale_linetype_manual(name=NULL, values=c("solid", "dotted", "dashed"), labels=c("Class 1", "Class 2", "Class 3")) +
+  scale_shape_manual(name=NULL, values=c(0, 3, 1), labels=c("Class 1", "Class 2", "Class 3")) +
+  theme_classic() +
+  theme(axis.text.x=element_text(angle=45, hjust=1, size=8))
+#Odds > 1
+ggplot(plot_results_2_f, aes(x=Proclivity, y=odds, group=as.factor(class), linetype=as.factor(class))) +
+  geom_line() +
+  geom_point(aes(shape=as.factor(class))) +
+  scale_linetype_manual(name=NULL, values=c("solid", "dotted", "dashed"), labels=c("Class 1", "Class 2", "Class 3")) +
+  scale_shape_manual(name=NULL, values=c(0, 3, 1), labels=c("Class 1", "Class 2", "Class 3")) +
+  theme_classic() +
+  theme(axis.text.x=element_text(angle=45, hjust=1, size=8))
+```
+*Note.* Prostitute = "Engaging in sexual activity with a prostitute"; Public porn = "Watching porn in public spaces such as a bus or library", Rape = "Engaging in sexual activity with an adult who does not agree or is not able to agree, for example, due to intoxication", Zoophilia = "Engaging in sexual activity with an animal", Porn child = "Watching porn depicting a child", Porn child darknet = "Watching porn depicting a child on the Darknet", Chat child = "Flirting or having sexual conversations via chat or webcam with a child", Gift child = "Paying or giving gifts to a child for online sexual material (for example, videos, images, or online streaming)", Sex child = "Having offline sex or sexual contact with a child", Porn YP = "Watching porn depicting a young person", Chat YP = "Flirting or having sexual conversations via chat or webcam with a young person", Gift YP = "Paying or giving gifts to a young person for online sexual material (for example, videos, images, or online streaming", Sex YP = "Having offline sex or sexual contact with a young person", Kill = "Killing someone", Speed = "Driving faster than the posted speed limit", DUI = "Driving under the influence of drugs/alcohol", Rob = "Robbing a bank"
 
 
 
