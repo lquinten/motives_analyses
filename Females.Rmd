@@ -116,7 +116,7 @@ We redo the LCA with the subset of female participants. The cutoff values for fi
 
 ## Class Enumeration
 
-```{r LCA_females, eval=F, include=F}
+```{r LCA_females, eval=F}
 #We carry on with a LCA on the female sample. We stay with a maximum of seven clusters.
 
 lca_models_f <- mx_lca(data=data_females %>% select(-CASE), classes=1:7)
@@ -150,8 +150,9 @@ plot(lca_fit_f)
 
 The following table shows how many participants are in which class.
 
-```{r class proportion, echo=F}
-class_prob_lca_f
+```{r class_proportion}
+flextable(as.data.frame(class_prob_lca_f)) %>% 
+  theme_booktabs()
 ```
 
 ## Model Evaluation
@@ -166,8 +167,7 @@ flextable(lca_fit_f) %>%
                 n_min=function(x) format(round(x, 2), nsmall=2),
                 np_ratio=function(x) format(round(x, 2), nsmall=2),
                 np_local=function(x) format(round(x, 2), nsmall=2)) %>%
-  set_header_labels(Name="Number of classes", LL="LogLikelihood", n="N", prob_min="Min prob", prob_max="Max prob", n_min="Min n", np_ratio="NP ratio", np_local="Local NP"
-                    ) %>%
+  set_header_labels(Name="Number of classes", LL="LogLikelihood", n="N", prob_min="Min prob", prob_max="Max prob", n_min="Min n", np_ratio="NP ratio", np_local="Local NP") %>%
   theme_booktabs() %>%
   autofit()
 ```
@@ -182,7 +182,7 @@ class_prob(lca_final_model_f, type="avg.mostlikely")
 
 The table and plot show the conditional item probabilities for the three-class model. 
 
-```{r prob_table_f, eval=F}
+```{r prob_table_f}
 #Make table presentable
 prob_table_LCA_f$Variable <- c(rep(c("Sex drive", "Mating effort", "Social anxiety", "Loneliness", "Mate value"), each=4), "Attraction to children", "Attraction to children", "Compulsive sex.", "Compulsive sex.", "Probl. porn use", "Probl. porn use")
 #Pretty display
