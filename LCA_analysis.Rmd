@@ -407,6 +407,15 @@ BCH_results_parameters <-tibble(outcomes = BCH_results$outcomes,
                                 p_lr_total = lapply(BCH_results$lr_total, function(x){x$prob}) %>% unlist(),
                                 p_lr_total_0.01 = lapply(BCH_results$lr_total_0.01, function(x){x$prob}) %>% unlist())
 
+#Because of the case weights we have to test the parameters manually via likelihood ratio tests
+BCH_results <- BCH_results %>% mutate(
+lr_1 = lapply(BCH_results$models, logistftest, test=1, weights=BCH_expanded_dataframe$modal_weight_2),
+lr_2 = lapply(BCH_results$models, logistftest, test=2, weights=BCH_expanded_dataframe$modal_weight_2),
+lr_3 = lapply(BCH_results$models, logistftest, test=3, weights=BCH_expanded_dataframe$modal_weight_2),
+lr_1_0.01 = lapply(BCH_results$models_0.01_weights, logistftest, test=1, weights=BCH_expanded_dataframe$modal_weight_2),
+lr_2_0.02 = lapply(BCH_results$models_0.01_weights, logistftest, test=2, weights=BCH_expanded_dataframe$modal_weight_2),
+lr_3_0.03 = lapply(BCH_results$models_0.01_weights, logistftest, test=3, weights=BCH_expanded_dataframe$modal_weight_2))
+
 #Save output to RDS.
 #BCH_results %>% saveRDS(file="./out/BCH_results.RDS")
 
