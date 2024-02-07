@@ -1,5 +1,5 @@
 ---
-title: "Females"
+title: "Analyses for Female Participants"
 output: word_document
 ---
 
@@ -56,7 +56,11 @@ desc_f <- tidySEM::descriptives(data_females %>% select(-CASE))
 desc_f <- desc_f %>% select(name, type, n, missing, unique, mode, mode_value, v)
 ```
 
-Show violin plots of all distributions and quantiles.
+Figure 1 shows violin plots (and one bar plot) of all distributions and quantiles.
+
+__Figure F1__
+
+*Distributions of all Motivational Risk Variables*
 
 ```{r violin plots}
 #create long data frame for plotting, including only the relevant variables
@@ -93,7 +97,13 @@ ggplot(plotd_f %>% filter(var=="attr"), aes(x=score)) +
   labs(x="Attraction to children", y="Count")
 ```
 
-Show new descriptives after categorising the variables according to the quantiles.
+*Note.* As some of the distributions are rather skewed, the variables were split into quantiles for the LCA (except for attraction to children).
+
+Table F1 shows the new descriptives after categorising the variables according to the quantiles.
+
+__Table F1__
+
+*Descriptives for Categorised Motivational Risk Variables*
 
 ```{r descriptives}
 #Create vector with rownames
@@ -110,11 +120,13 @@ flextable(desc_f %>% select(-"type", -"missing")) %>%
   autofit()
 ```
 
-# Latent Class Analysis
+*Note.* Mode refers to how many participants share this modal value. v is a measure of variability for categorical variables and refers to the probability that two randomly drawn participants belong to different categories. Round parentheses are exclusive boundaries, square brackets are inclusive boundaries.
 
-We redo the LCA with the subset of female participants. The cutoff values for fit indices obviously stay the same. It should be noted that two more variables needed to be dichotomised in the female sample, because they were also to skewed to form quantiles. Those were PPCS and CSBD.
+# 2. Latent Class Analysis
 
-## Class Enumeration
+We redo the LCA with the subset of female participants. The cutoff values for fit indices stay the same. It should be noted that two more variables needed to be dichotomised in the female sample, because they were also to skewed to form quantiles. Those were ‘Probl. Porn use’ and ‘Compulsive sex.’ (see Table F1).
+
+## 2.1 Class Enumeration
 
 ```{r LCA_females, eval=F}
 #We carry on with a LCA on the female sample. We stay with a maximum of seven clusters.
@@ -142,22 +154,34 @@ prob_table_LCA_f <- reshape(prob_table_LCA_f, direction="wide", v.names="Probabi
 class_prob_lca_f <- class_prob(lca_final_model_f, "sum.posterior")
 ```
 
-Show the BIC values for the different numbers of classes. It is best for three classes.
+Figure F2 shows the BIC values for the different numbers of classes. It is best (i.e. lowest) for three classes, which is the model we choose.
+
+__Figure F2__
+
+*BIC Values for Different Numbers of Classes*
 
 ```{r scree_plot_f}
 plot(lca_fit_f)
 ```
 
-The following table shows how many participants are in which class.
+Table F2 shows how many participants are in which class in the three-class model.
+
+__Table F2__
+
+*Number of Participants Per Class in the Three-Class Model*
 
 ```{r class_proportion}
 flextable(as.data.frame(class_prob_lca_f)) %>% 
   theme_booktabs()
 ```
 
-## Model Evaluation
+## 2.2 Model Evaluation
 
-Show the different fit indices for the different numbers of classes.
+Table F3 shows the different fit indices for the different numbers of classes.
+
+__Table F3__
+
+*Fit Indices for Different Numbers of Classes*
 
 ```{r showfittable_f}
 flextable(lca_fit_f) %>%
@@ -172,15 +196,20 @@ flextable(lca_fit_f) %>%
   autofit()
 ```
 
+*Note.* BIC = Bayesian information criterion. Entropy = inverse entropy. Min/Max prob = minimum/maximum values (respectively) on the diagonal of the table of average posterior probabilities by most likely class membership (the higher these values, the better the model fit; recommended cut-off = .7; Masyn, 2013; Nylund-Gibson & Choi, 2018). Min *n* = proportion of participants that are assigned to the smallest class. NP ratio = how many observations are accessible for each parameter estimation on average (Van Lissa et al., 2023). Local NP = number of cases per parameter in the smallest class (indicates how much data there are for each parameter).
+
 <!--AvePP by most likely class for females
 ```{r avePP_f, eval=F}
 class_prob(lca_final_model_f, type="avg.mostlikely")
 ```
 -->
 
-## Model Interpretation
+## 2.3 Model Interpretation
+Table F4 and Figure F3 show the conditional item probabilities for the three-class model.
 
-The table and plot show the conditional item probabilities for the three-class model. 
+__Table F4__
+
+*Conditional Item Probabilities per Category and Class*
 
 ```{r prob_table_f}
 #Make table presentable
@@ -195,6 +224,10 @@ flextable(prob_table_LCA_f) %>%
   autofit()
 ```
 
+__Figure F3__
+
+*Conditional Item Probabilities per Class*
+
 ```{r prob_plot_f, fig.width=12}
 plot_prob(lca_final_model_f) +
   scale_fill_grey(start = 0.9, end = 0.5, aesthetics = "fill") +
@@ -204,9 +237,9 @@ plot_prob(lca_final_model_f) +
   theme(axis.text.x=element_text(angle=65, hjust=1, size=10))
 ```
 
-The classes look very similar to those for the male participants. Class 1 is similar to the "high risk" class, class 2 is similar to the "high mate value" class, and class 3 is similar to the "social incompetence" class.
+The classes look very similar to those for the male participants. Class 1 is similar to the “high risk” class, class 2 is similar to the “high mate value” class, and class 3 is similar to the “social incompetence” class.
 
-# Distal Outcomes Analyses
+# 3. Distal Outcomes Analyses
 
 ```{r BCH_dataframe, eval=F}
 #Load precoded functions
@@ -363,7 +396,11 @@ BCH_results_parameters_f <- tibble(outcomes = BCH_results_f$outcomes,
 # BCH_results_parameters_f %>% saveRDS(file="./out/BCH_results_parameters_f.RDS")
 ```
 
-Predicted class 1 was chosen as the reference class because it can be interpreted as the "high risk" class.
+Predicted class 1 was chosen as the reference class because it can be interpreted as the “high risk” class. Table F5 and Figure F4 show odds and odds ratios (ORs) for all proclivity items per class.
+
+__Table F5__
+
+*Odds Ratios for All Proclivity Measures*
 
 ```{r show_BCH_results}
 #Put relevant results in a table
@@ -406,6 +443,12 @@ flextable(results_f, col_keys=c("Proclivity", "p_lr_total_0.01", "b_intercept_0.
   theme_booktabs() %>%
   autofit()
 ```
+
+*Note.* Global LRT shows the *p* value of a test of the full against an intercept-only model. Penalised LRTs were used to obtain *p* values. Confidence intervals are not included because they would have been less reliable than *p* values. 
+
+__Figure F4__
+
+*Odds for the Proclivities for Atypical (Sexual) Behaviours per Predicted Class*
 
 ```{r plot_proclivities}
 #rename proclivities for plotting
@@ -456,7 +499,7 @@ ggplot(plot_results_2_f, aes(x=Proclivity, y=odds, group=as.factor(class), linet
   theme(axis.text.x=element_text(angle=45, hjust=1, size=8))
 ```
 
-*Note.* Prostitute = "Engaging in sexual activity with a prostitute"; Public porn = "Watching porn in public spaces such as a bus or library", Rape = "Engaging in sexual activity with an adult who does not agree or is not able to agree, for example, due to intoxication", Zoophilia = "Engaging in sexual activity with an animal", Porn child = "Watching porn depicting a child", Porn child darknet = "Watching porn depicting a child on the Darknet", Chat child = "Flirting or having sexual conversations via chat or webcam with a child", Gift child = "Paying or giving gifts to a child for online sexual material (for example, videos, images, or online streaming)", Sex child = "Having offline sex or sexual contact with a child", Porn YP = "Watching porn depicting a young person", Chat YP = "Flirting or having sexual conversations via chat or webcam with a young person", Gift YP = "Paying or giving gifts to a young person for online sexual material (for example, videos, images, or online streaming", Sex YP = "Having offline sex or sexual contact with a young person", Kill = "Killing someone", Speed = "Driving faster than the posted speed limit", DUI = "Driving under the influence of drugs/alcohol", Rob = "Robbing a bank"
+*Note.* Prostitute = "Engaging in sexual activity with a prostitute"; Public porn = "Watching porn in public spaces such as a bus or library", Rape = "Engaging in sexual activity with an adult who does not agree or is not able to agree, for example, due to intoxication", Zoophilia = "Engaging in sexual activity with an animal", Porn child = "Watching porn depicting a child", Porn child darknet = "Watching porn depicting a child on the Darknet", Chat child = "Flirting or having sexual conversations via chat or webcam with a child", Gift child = "Paying or giving gifts to a child for online sexual material (for example, videos, images, or online streaming)", Sex child = "Having offline sex or sexual contact with a child", Porn YP = "Watching porn depicting a young person", Chat YP = "Flirting or having sexual conversations via chat or webcam with a young person", Gift YP = "Paying or giving gifts to a young person for online sexual material (for example, videos, images, or online streaming", Sex YP = "Having offline sex or sexual contact with a young person", Kill = "Killing someone", Speed = "Driving faster than the posted speed limit", DUI = "Driving under the influence of drugs/alcohol", Rob = "Robbing a bank".  Because of the high differences in odds, some of the items are displayed in a separate plot with a different scale.
 
 
 
