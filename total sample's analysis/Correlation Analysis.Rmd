@@ -1,0 +1,29 @@
+---
+title: "Correlation_Analysis"
+author: "Frederic Gnielka"
+date: "2024-02-07"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r library}
+library(tidyverse)
+```
+
+
+```{r load_data}
+
+data <- haven::read_spss("./data raw/dataE_clear5 2209.sav") %>% dplyr::select(CASE, sexdrive2, CSBD, PPCS_6, meffort, socialanx, lon, mvalue, attr, starts_with("Y") & ends_with("r"))
+
+```
+
+```{r}
+# creating correlation matrix
+corr_mat <- round(cor(data %>% select(-CASE)),2)
+ggcorrplot::ggcorrplot(corr_mat, hc.order = TRUE, outline.col = "white")
+```
+
+
