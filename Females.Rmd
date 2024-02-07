@@ -172,7 +172,7 @@ flextable(lca_fit_f) %>%
   autofit()
 ```
 
-<!--AvePP by Most Likely Class for Females
+<!--AvePP by most likely class for females
 ```{r avePP_f, eval=F}
 class_prob(lca_final_model_f, type="avg.mostlikely")
 ```
@@ -455,6 +455,7 @@ ggplot(plot_results_2_f, aes(x=Proclivity, y=odds, group=as.factor(class), linet
   theme_classic() +
   theme(axis.text.x=element_text(angle=45, hjust=1, size=8))
 ```
+
 *Note.* Prostitute = "Engaging in sexual activity with a prostitute"; Public porn = "Watching porn in public spaces such as a bus or library", Rape = "Engaging in sexual activity with an adult who does not agree or is not able to agree, for example, due to intoxication", Zoophilia = "Engaging in sexual activity with an animal", Porn child = "Watching porn depicting a child", Porn child darknet = "Watching porn depicting a child on the Darknet", Chat child = "Flirting or having sexual conversations via chat or webcam with a child", Gift child = "Paying or giving gifts to a child for online sexual material (for example, videos, images, or online streaming)", Sex child = "Having offline sex or sexual contact with a child", Porn YP = "Watching porn depicting a young person", Chat YP = "Flirting or having sexual conversations via chat or webcam with a young person", Gift YP = "Paying or giving gifts to a young person for online sexual material (for example, videos, images, or online streaming", Sex YP = "Having offline sex or sexual contact with a young person", Kill = "Killing someone", Speed = "Driving faster than the posted speed limit", DUI = "Driving under the influence of drugs/alcohol", Rob = "Robbing a bank"
 
 
