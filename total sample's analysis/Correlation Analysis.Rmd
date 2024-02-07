@@ -1,29 +1,67 @@
 ---
 title: "Correlation_Analysis"
-author: "Frederic Gnielka"
-date: "2024-02-07"
-output: html_document
+output: word_document
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
+```{r setup, include=F, message=F, warning=F}
+knitr::opts_chunk$set(echo=F, warning=F, message=F)
 
-```{r library}
 library(tidyverse)
 ```
 
+# 1. Correlations for the Entire Sample
 
-```{r load_data}
-
+```{r correlation_whole}
 data <- haven::read_spss("./data raw/dataE_clear5 2209.sav") %>% dplyr::select(CASE, sexdrive2, CSBD, PPCS_6, meffort, socialanx, lon, mvalue, attr, starts_with("Y") & ends_with("r"))
-
-```
-
-```{r}
 # creating correlation matrix
-corr_mat <- round(cor(data %>% select(-CASE)),2)
-ggcorrplot::ggcorrplot(corr_mat, hc.order = TRUE, outline.col = "white")
+corr_mat <- round(cor(data %>% select(-CASE), method="spearman"), 2)
+#p.mat <- ggcorrplot::cor_pmat(data %>% select(-CASE))
+
+colnames(corr_mat) <- c("Sex drive", "Compulsive sex.", "Probl. porn use", "Mating effort", "Social anxiety", "Loneliness", "Mate value", "Attraction to children", "Speed", "DUI", "Rob", "Kill", "Prostitute", "Rape", "Zoophilia", "Public porn", "Porn child", "Porn child darknet", "Chat child", "Gift child", "Sex child", "Porn YP", "Chat YP", "Gift YP", "Sex YP")
+rownames(corr_mat) <- colnames(corr_mat)
+ggcorrplot::ggcorrplot(corr_mat, hc.order=T, outline.col="white", legend.title="Correlation", colors=c("#0072B2", "white", "#D55E00")
+                       #, p.mat = p.mat, insig="blank"
+                       ) +
+  labs(x="", y="") +
+  theme_classic() +
+  theme(axis.text.x=element_text(angle=50, hjust=1, size=9, 
+                                 face = c(rep('bold', 2), rep("plain", 4), rep('bold', 5), rep("plain", 11), "bold", 
+                                          rep("plain", 2))),
+        axis.text.y=element_text(face = c(rep('bold', 2), rep("plain", 4), rep('bold', 5), rep("plain", 11), "bold", 
+                                          rep("plain", 2))))
 ```
 
+# 2. Correlations for the Male Subsample
+
+```{r correlation_male}
+data_m <- haven::read_spss("./data raw/dataE_clear5 2209.sav") %>% dplyr::select(CASE, gender, sexdrive2, CSBD, PPCS_6, meffort, socialanx, lon, mvalue, attr, starts_with("Y") & ends_with("r")) %>% filter(gender == 2) %>% dplyr::select(-gender)
+# creating correlation matrix
+corr_mat_m <- round(cor(data_m %>% select(-CASE), method="spearman"), 2)
+
+colnames(corr_mat_m) <- c("Sex drive", "Compulsive sex.", "Probl. porn use", "Mating effort", "Social anxiety", "Loneliness", "Mate value", "Attraction to children", "Speed", "DUI", "Rob", "Kill", "Prostitute", "Rape", "Zoophilia", "Public porn", "Porn child", "Porn child darknet", "Chat child", "Gift child", "Sex child", "Porn YP", "Chat YP", "Gift YP", "Sex YP")
+rownames(corr_mat_m) <- colnames(corr_mat_m)
+ggcorrplot::ggcorrplot(corr_mat_m, hc.order=T, outline.col="white", legend.title="Correlation", colors=c("#0072B2", "white", "#D55E00")) +
+  labs(x="", y="") +
+  theme_classic() +
+  theme(axis.text.x=element_text(angle=50, hjust=1, size=9, 
+                                 face = c(rep("bold", 2), rep('plain', 15), "bold", rep('plain', 2), rep("bold", 5))),
+        axis.text.y=element_text(face = c(rep("bold", 2), rep('plain', 15), "bold", rep('plain', 2), rep("bold", 5))))
+```
+
+# 3. Correlations for the Female Subsample
+
+```{r correlation_male}
+data_f <- haven::read_spss("./data raw/dataE_clear5 2209.sav") %>% dplyr::select(CASE, gender, sexdrive2, CSBD, PPCS_6, meffort, socialanx, lon, mvalue, attr, starts_with("Y") & ends_with("r")) %>% filter(gender == 1) %>% dplyr::select(-gender)
+# creating correlation matrix
+corr_mat_f <- round(cor(data_f %>% select(-CASE), method="spearman"), 2)
+
+colnames(corr_mat_f) <- c("Sex drive", "Compulsive sex.", "Probl. porn use", "Mating effort", "Social anxiety", "Loneliness", "Mate value", "Attraction to children", "Speed", "DUI", "Rob", "Kill", "Prostitute", "Rape", "Zoophilia", "Public porn", "Porn child", "Porn child darknet", "Chat child", "Gift child", "Sex child", "Porn YP", "Chat YP", "Gift YP", "Sex YP")
+rownames(corr_mat_f) <- colnames(corr_mat_f)
+ggcorrplot::ggcorrplot(corr_mat_f, hc.order=T, outline.col="white", legend.title="Correlation", colors=c("#0072B2", "white", "#D55E00")) +
+  labs(x="", y="") +
+  theme_classic() +
+  theme(axis.text.x=element_text(angle=50, hjust=1, size=9, 
+                                 face = c(rep("bold", 5), rep('plain', 6), "bold", rep('plain', 11), rep("bold", 2))),
+        axis.text.y=element_text(face = c(rep("bold", 5), rep('plain', 6), "bold", rep('plain', 11), rep("bold", 2))))
+```
 
