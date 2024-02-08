@@ -38,7 +38,7 @@ The performed analyses are exploratory. -->
 
 ```{r data}
 #We use gender instead of sex. A 2 represents a male. We want to only grab males. 
-data_males <- haven::read_spss("./data/data raw/dataE_2112.sav") %>% dplyr::select(gender, CASE, sexdrive2, CSBD, PPCS_6, meffort, socialanx, lon, mvalue, attr) %>% filter(gender == 2) %>% dplyr::select(-gender)
+data_males <- haven::read_spss("./data/dataE_2112.sav") %>% dplyr::select(gender, CASE, sexdrive2, CSBD, PPCS_6, meffort, socialanx, lon, mvalue, attr) %>% filter(gender == 2) %>% dplyr::select(-gender)
 ```
 
 Figure A shows the distributions of all motivational factors used for the analyses in the present study. As some of the distributions were rather skewed, quantiles are included (except for sexual interest in children).
@@ -177,14 +177,13 @@ Models with one to seven classes were estimated. For class enumeration, the Baye
 plot(lca_fit)
 ```
 
-```{=html}
 <!-- We also tried to use Likelihood Ratio Tests for class enumeration, as they are often used together with fit indices such as the BIC, but encountered some problems. While the bootstrapped likelihood ratio test (which is sometimes recommended based on simulation studies) proved too computationally expensive for my home computer (with multiple days running time and no sign of the algorithm stopping), the Lo-Mendell-Rubin-LRT returned a warning and only NA values [@sinha_practitioners_2021; @van_lissa_recommended_2023]. The exact reason for this is still unclear. It might be that Vuong's distinguishability test, that is performed in the LMR-LRT procedure, came to the result that all models are actually indistinguishable [@merkle_testing_2016]. A solution with no clusters was also what was indicated by the OPTICS algorithm. We still need to verify the reason for the NA output. 
 However, @van_lissa_recommended_2023 advise to be cautious using LRTs, especially in exploratory LCA, because the conditions underlying the LRT are likely not met and the test results may be flawed or, as is the case with BLRTs, they depend heavily on the model specifications and should better be used in confirmatory settings; see also @jeffries_note_2003.
 
 We did not calculate a likelihood ratio test (LRT), as @van_lissa_recommended_2023 advise to be cautious using LRTs. This especially true in exploratory LCA because the conditions underlying the LRT are likely not met and the test results may be flawed or, as is the case with bootstrapped LRTs, they depend heavily on the model specifications and should better be used in confirmatory settings; see also @jeffries_note_2003.
 
 First, we inspect the fit_table to assess how well the models with different numbers of classes perform in that data set. We should always keep in mind that the fit indices give us only in-sample fit and should therefore be taken with a grain of salt. -->
-```
+
 Different fit indices for model evaluation are displayed in Table B. Inverse entropy as a measure of class separability was below the often used target minimum value of .80 for all models (e.g., @nylund-gibson_ten_2018; Weller et al., 2020). These results are associated with a misclassification rate of around 20% for the assignment to the correct class (Wang et al., 2017) and might relate to differences between how well the different scales can distinguish between the classes in the sample. Of all models with more than one class, the three-class solution scored the highest value (see Table B).
 
 **Table B**
@@ -345,7 +344,7 @@ for (i in 1:17){
 }
 
 #Enter Extra Analysis for people who assumed young persons to be of an age range that is potentially problematic, i.e. <15. Extra analysis was inspired by information that people consuming tend to call victims young persons. 
-CASE_yp <-  haven::read_spss("./data/data raw/dataE_2112.sav") %>% filter(gender == 2)  %>% filter(range_young1 < 15) %>% dplyr::select(CASE) %>% unlist()
+CASE_yp <-  haven::read_spss("./data/dataE_2112.sav") %>% filter(gender == 2)  %>% filter(range_young1 < 15) %>% dplyr::select(CASE) %>% unlist()
 
 BCH_expanded_dataframe %>% filter(CASE %in% CASE_yp) %>% select(contains("Youth"))
 
@@ -608,7 +607,7 @@ ggplot(plot_results_2, aes(x=Proclivity, y=Odds, group=as.factor(class), linetyp
 <!-- We re-did the BCH analysis for young-person proclivity items only with the participants whose definition of a young person included people under 18.
 ```{r young_persons_analysis, eval=F}
 
-CASE_yp <-  haven::read_spss("./data/data raw/dataE_2112.sav") %>% filter(gender == 2)  %>% filter(range_young1 < 15) %>% dplyr::select(CASE) %>% unlist()
+CASE_yp <-  haven::read_spss("./data/dataE_2112.sav") %>% filter(gender == 2)  %>% filter(range_young1 < 15) %>% dplyr::select(CASE) %>% unlist()
 
 BCH_expanded_dataframe %>% filter(CASE %in% CASE_yp) %>% select(contains("Youth"))
 
