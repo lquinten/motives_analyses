@@ -12,7 +12,7 @@ library(tidyverse)
 # 1. Correlations for the Entire Sample
 
 ```{r correlation_whole}
-data <- haven::read_spss("./data raw/dataE_clear5 2209.sav") %>% dplyr::select(CASE, sexdrive2, CSBD, PPCS_6, meffort, socialanx, lon, mvalue, attr, starts_with("Y") & ends_with("r"))
+data <- haven::read_spss("./data/dataE_clear5 2209.sav") %>% dplyr::select(CASE, sexdrive2, CSBD, PPCS_6, meffort, socialanx, lon, mvalue, attr, starts_with("Y") & ends_with("r"))
 # creating correlation matrix
 corr_mat <- round(cor(data %>% select(-CASE), method="spearman"), 2)
 #p.mat <- ggcorrplot::cor_pmat(data %>% select(-CASE))
@@ -34,7 +34,7 @@ ggcorrplot::ggcorrplot(corr_mat, hc.order=T, outline.col="white", legend.title="
 # 2. Correlations for the Male Subsample
 
 ```{r correlation_male}
-data_m <- haven::read_spss("./data raw/dataE_clear5 2209.sav") %>% dplyr::select(CASE, gender, sexdrive2, CSBD, PPCS_6, meffort, socialanx, lon, mvalue, attr, starts_with("Y") & ends_with("r")) %>% filter(gender == 2) %>% dplyr::select(-gender)
+data_m <- haven::read_spss("./data/dataE_clear5 2209.sav") %>% dplyr::select(CASE, gender, sexdrive2, CSBD, PPCS_6, meffort, socialanx, lon, mvalue, attr, starts_with("Y") & ends_with("r")) %>% filter(gender == 2) %>% dplyr::select(-gender)
 # creating correlation matrix
 corr_mat_m <- round(cor(data_m %>% select(-CASE), method="spearman"), 2)
 
@@ -51,7 +51,7 @@ ggcorrplot::ggcorrplot(corr_mat_m, hc.order=T, outline.col="white", legend.title
 # 3. Correlations for the Female Subsample
 
 ```{r correlation_male}
-data_f <- haven::read_spss("./data raw/dataE_clear5 2209.sav") %>% dplyr::select(CASE, gender, sexdrive2, CSBD, PPCS_6, meffort, socialanx, lon, mvalue, attr, starts_with("Y") & ends_with("r")) %>% filter(gender == 1) %>% dplyr::select(-gender)
+data_f <- haven::read_spss("./data/dataE_clear5 2209.sav") %>% dplyr::select(CASE, gender, sexdrive2, CSBD, PPCS_6, meffort, socialanx, lon, mvalue, attr, starts_with("Y") & ends_with("r")) %>% filter(gender == 1) %>% dplyr::select(-gender)
 # creating correlation matrix
 corr_mat_f <- round(cor(data_f %>% select(-CASE), method="spearman"), 2)
 

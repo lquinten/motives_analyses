@@ -21,19 +21,19 @@ lapply(packages, require, character.only=T)
 ##import results
 
 #Results from the Latent Profile Analysis of the whole sample is imported from the saved RDS files. 
-lpa_full_data <- readRDS("C:/Users/gniel/OneDrive - MSB Medical School Berlin/Project special issue/LPA_analysis/out/LPA_full_data.RDS")
+lpa_full_data <- readRDS("./out/LPA_full_data.RDS")
 
 #All lpa models in all cv-folds. Including the data used for fitting in the model objects.
-lpa_models <- readRDS("C:/Users/gniel/OneDrive - MSB Medical School Berlin/Project special issue/LPA_analysis/out/lpa_models.RDS")
+lpa_models <- readRDS("./out/lpa_models.RDS")
 
 #cross-validated clustering coefficients including DBCV.
-lpa_model_eval <- readRDS("C:/Users/gniel/OneDrive - MSB Medical School Berlin/Project special issue/LPA_analysis/out/lpa_model_eval.RDS")
+lpa_model_eval <- readRDS("./out/lpa_model_eval.RDS")
 
 #Results from the OPTICS clustering. All models in all cv folds
-optics_models <- readRDS("C:/Users/gniel/OneDrive - MSB Medical School Berlin/Project special issue/LPA_analysis/out/optics_models.RDS")
+optics_models <- readRDS("./out/optics_models.RDS")
 
 #load data
-data <- haven::read_spss("./data/data raw/dataE_clear5 2209.sav") %>% select(CASE, sexdrive2, CSBD, PPCS_6, meffort, socialanx, lon, mvalue, attr)
+data <- haven::read_spss("./data/dataE_clear5 2209.sav") %>% select(CASE, sexdrive2, CSBD, PPCS_6, meffort, socialanx, lon, mvalue, attr)
 
 colnames(data) <- c("uid", "sex_drive", "csbd", "ppcs", "soi_r_me", "social_anxiety", "lon", "mvs", "attraction_to_children")
 ```
@@ -216,7 +216,7 @@ for (i in 1:nrow(results)){
 ```
 
 ```{r insert_dbcv, eval=F}
-dbcv <- readr::read_csv("./data/data_prepared/LPA_cv_predicted_clusters/dbcv_dat.csv") %>% as.tibble() %>% select(dbcv)
+dbcv <- readr::read_csv("./data/LPA_cv_predicted_clusters/dbcv_dat.csv") %>% as.tibble() %>% select(dbcv)
 
 lpa_models <- lpa_models %>% mutate("dbcv" = dbcv)
 

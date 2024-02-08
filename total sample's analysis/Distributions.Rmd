@@ -22,7 +22,7 @@ lapply(packages, require, character.only=T)
 rm(packages)
 
 ##DATA##
-data <- haven::read_spss("./data/data raw/dataE_clear5 2209.sav") %>% dplyr::select(CASE, sexdrive2, CSBD, PPCS_6, meffort, socialanx, lon, mvalue, attr)
+data <- haven::read_spss("./data/dataE_clear5 2209.sav") %>% dplyr::select(CASE, sexdrive2, CSBD, PPCS_6, meffort, socialanx, lon, mvalue, attr)
 ```
 
 # violin (and Bar) Plots of All Motivational Risk Factors for the Entire Sample
