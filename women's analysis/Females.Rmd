@@ -34,7 +34,7 @@ rm(packages)
 ##DATA##
 
 #We use gender instead of sex. A 1 represents a female. We want to only grab females. 
-data_females <- haven::read_spss("./data/data raw/dataE_2112.sav") %>% dplyr::select(gender, CASE, sexdrive2, CSBD, PPCS_6, meffort, socialanx, lon, mvalue, attr) %>% filter(gender == 1) %>% dplyr::select(-gender)
+data_females <- haven::read_spss("./data/dataE_2112.sav") %>% dplyr::select(gender, CASE, sexdrive2, CSBD, PPCS_6, meffort, socialanx, lon, mvalue, attr) %>% filter(gender == 1) %>% dplyr::select(-gender)
 ```
 
 # 1. Distributions of Motivational Risk Variables
@@ -246,7 +246,7 @@ BCH_expanded_dataframe_f <- BCH_expanded_dataframe_f %>% mutate(predicted_class 
 BCH_expanded_dataframe_f <- fastDummies::dummy_cols(BCH_expanded_dataframe_f, select_columns = "predicted_class")
 
 #Combine the expanded dataframe with the outcome variables
-BCH_expanded_dataframe_f <- BCH_expanded_dataframe_f %>% full_join(y=haven::read_spss("./data/data raw/dataE_clear5 2209.sav") %>% filter(gender == 1) %>% select(CASE, starts_with("Y_") & ends_with("r")) %>% mutate(CASE = CASE %>% as.numeric()), by="CASE")
+BCH_expanded_dataframe_f <- BCH_expanded_dataframe_f %>% full_join(y=haven::read_spss("./data/dataE_clear5 2209.sav") %>% filter(gender == 1) %>% select(CASE, starts_with("Y_") & ends_with("r")) %>% mutate(CASE = CASE %>% as.numeric()), by="CASE")
 
 #The Regression estimation appears to be not working with negative weights. I do not understand why this is neccessarily the case. We approach to ad-hoc solutions: 1. Fixing the negative weights to zero, 2. We fix the negative weights to 0.01. 
 
