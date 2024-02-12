@@ -241,7 +241,7 @@ flextable(prob_table_LCA_m) %>%
   set_formatter(Probability.class1=function(x) format(round(x, 2), nsmall=2),
                 Probability.class2=function(x) format(round(x, 2), nsmall=2),
                 Probability.class3=function(x) format(round(x, 2), nsmall=2)) %>%
-  set_header_labels(Probability.class1="Class 1", Probability.class2="Class 2", Probability.class3="Class 3") %>%
+  set_header_labels(Probability.class1="Class 1: \"Mating prowess\"", Probability.class2="Class 2: \"Social needs\"", Probability.class3="Class 3: \"Multiple motivations\"") %>%
   theme_booktabs() %>%
   autofit()
 ```
@@ -487,7 +487,7 @@ results <- results %>% mutate(odds_predicted_class_1_0.01 = exp(results$b_interc
                               odds_predicted_class_2_0.01 = exp(results$b_intercept_0.01)*exp(results$b_predicted_class_2_0.01),
                               odds_predicted_class_3_0.01 = exp(results$b_intercept_0.01))
 #Change order of rows for unity with other tables
-results <- results[c(10, 11, 12, 17, 7, 8, 1, 4, 14, 9, 2, 5, 15, 16, 3, 13, 6),]
+results <- results[c(10, 11, 12, 17, 7, 8, 1, 4, 14, 16, 3, 13, 6),]  #without young person items 9, 2, 5, 15,
 #Pretty output
 flextable(results, col_keys=c("Proclivity", "p_lr_total_0.01", "b_intercept_0.01", 
                               #"CI_intercept", 
@@ -519,7 +519,7 @@ flextable(results, col_keys=c("Proclivity", "p_lr_total_0.01", "b_intercept_0.01
 
 ```{r plot_proclivities}
 #rename proclivities for plotting
-procl <- c("Prostitute", "Public porn", "Rape", "Zoophilia", "Porn child", "Porn child darknet", "Chat child", "Gift child", "Sex child", "Porn YP", "Chat YP", "Gift YP", "Sex YP", "Speed", "DUI", "Rob", "Kill")
+procl <- c("Prostitute", "Public porn", "Rape", "Zoophilia", "Porn child", "Porn child darknet", "Chat child", "Gift child", "Sex child", "Speed", "DUI", "Rob", "Kill")
 #Rename proclivities
 plot_results <- results
 plot_results$Proclivity <- procl
@@ -552,16 +552,16 @@ plot_results_2$class <- rep(1:3, nrow(plot_results_2)/3)
 ggplot(plot_results, aes(x=Proclivity, y=Odds, group=as.factor(class), linetype=as.factor(class))) +
   geom_line() +
   geom_point(aes(shape=as.factor(class))) +
-  scale_linetype_manual(name=NULL, values=c("dotted", "dashed", "solid"), labels=c("Class 1", "Class 2", "Class 3")) +
-  scale_shape_manual(name=NULL, values=c(3, 1, 0), labels=c("Class 1", "Class 2", "Class 3")) +
+  scale_linetype_manual(name=NULL, values=c("dotted", "dashed", "solid"), labels=c("Class 1: \"Mating prowess\"", "Class 2: \"Social needs\"", "Class 3: \"Multiple motivations\"")) +
+  scale_shape_manual(name=NULL, values=c(3, 1, 0), labels=c("Class 1: \"Mating prowess\"", "Class 2: \"Social needs\"", "Class 3: \"Multiple motivations\"")) +
   theme_classic() +
   theme(axis.text.x=element_text(angle=45, hjust=1, size=8))
 #Odds > 1
 ggplot(plot_results_2, aes(x=Proclivity, y=Odds, group=as.factor(class), linetype=as.factor(class))) +
   geom_line() +
   geom_point(aes(shape=as.factor(class))) +
-  scale_linetype_manual(name=NULL, values=c("dotted", "dashed", "solid"), labels=c("Class 1", "Class 2", "Class 3")) +
-  scale_shape_manual(name=NULL, values=c(3, 1, 0), labels=c("Class 1", "Class 2", "Class 3")) +
+  scale_linetype_manual(name=NULL, values=c("dotted", "dashed", "solid"), labels=c("Class 1: \"Mating prowess\"", "Class 2: \"Social needs\"", "Class 3: \"Multiple motivations\"")) +
+  scale_shape_manual(name=NULL, values=c(3, 1, 0), labels=c("Class 1: \"Mating prowess\"", "Class 2: \"Social needs\"", "Class 3: \"Multiple motivations\"")) +
   theme_classic() +
   theme(axis.text.x=element_text(angle=45, hjust=1, size=8))
 
@@ -602,7 +602,7 @@ ggplot(plot_results_2, aes(x=Proclivity, y=Odds, group=as.factor(class), linetyp
 # ggarrange(plotlist=c(plots, plots_2), ncol=6, nrow=3)
 ```
 
-*Note.* Public porn = "Watching porn in public spaces such as a bus or library", Rape = "Engaging in sexual activity with an adult who does not agree or is not able to agree, for example, due to intoxication", Zoophilia = "Engaging in sexual activity with an animal", Porn child = "Watching porn depicting a child", Porn child darknet = "Watching porn depicting a child on the Darknet", Chat child = "Flirting or having sexual conversations via chat or webcam with a child", Gift child = "Paying or giving gifts to a child for online sexual material (for example, videos, images, or online streaming)", Sex child = "Having offline sex or sexual contact with a child", Porn YP = "Watching porn depicting a young person", Chat YP = "Flirting or having sexual conversations via chat or webcam with a young person", Gift YP = "Paying or giving gifts to a young person for online sexual material (for example, videos, images, or online streaming", Sex YP = "Having offline sex or sexual contact with a young person", DUI = "Driving under the influence of drugs/alcohol", Kill = "Killing someone", Prostitute = "Engaging in sexual activity with a prostitute", Speed = "Driving faster than the posted speed limit", Rob = "Robbing a bank". Because of the high differences in odds, some of the items are displayed in a separate plot with a different scale.
+*Note.* Public porn = "Watching porn in public spaces such as a bus or library", Rape = "Engaging in sexual activity with an adult who does not agree or is not able to agree, for example, due to intoxication", Zoophilia = "Engaging in sexual activity with an animal", Porn child = "Watching porn depicting a child", Porn child darknet = "Watching porn depicting a child on the Darknet", Chat child = "Flirting or having sexual conversations via chat or webcam with a child", Gift child = "Paying or giving gifts to a child for online sexual material (for example, videos, images, or online streaming)", Sex child = "Having offline sex or sexual contact with a child", <!-- Porn YP = "Watching porn depicting a young person", Chat YP = "Flirting or having sexual conversations via chat or webcam with a young person", Gift YP = "Paying or giving gifts to a young person for online sexual material (for example, videos, images, or online streaming", Sex YP = "Having offline sex or sexual contact with a young person",-->DUI = "Driving under the influence of drugs/alcohol", Kill = "Killing someone", Prostitute = "Engaging in sexual activity with a prostitute", Speed = "Driving faster than the posted speed limit", Rob = "Robbing a bank". Because of the high differences in odds, some of the items are displayed in a separate plot with a different scale.
 
 <!-- We re-did the BCH analysis for young-person proclivity items only with the participants whose definition of a young person included people under 18.
 ```{r young_persons_analysis, eval=F}
