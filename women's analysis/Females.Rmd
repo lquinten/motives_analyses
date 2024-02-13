@@ -27,10 +27,6 @@ lapply(packages, require, character.only=T)
 #Clean up
 rm(packages)
 
-#######ATTENTION!!!
-#At this point we load a pre-saved .RData file in which the environment is saved. That makes the code less reproducible, but removing the eval=F specifications in all code blocks will make that possible 
-#load(".RData")
-
 ##DATA##
 
 #We use gender instead of sex. A 1 represents a female. We want to only grab females. 
@@ -193,7 +189,7 @@ flextable(prob_table_LCA_f) %>%
   set_formatter(Probability.class1=function(x) format(round(x, 2), nsmall=2),
                 Probability.class2=function(x) format(round(x, 2), nsmall=2),
                 Probability.class3=function(x) format(round(x, 2), nsmall=2)) %>%
-  set_header_labels(Probability.class1="Class 1", Probability.class2="Class 2", Probability.class3="Class 3") %>%
+  set_header_labels(Probability.class1="Class 1: \"Multiple motivations\"", Probability.class2="Class 2: \"Mating prowess\"", Probability.class3="Class 3: \"Social needs\"") %>%
   theme_booktabs() %>%
   autofit()
 ```
@@ -207,7 +203,7 @@ plot_prob(lca_final_model_f) +
   theme(axis.text.x=element_text(angle=65, hjust=1, size=10))
 ```
 
-The classes look very similar to those for the male participants. Class 1 is similar to the "high risk" class, class 2 is similar to the "high mate value" class, and class 3 is similar to the "social incompetence" class.
+The classes look very similar to those for the male participants. Class 1 is similar to the "multiple motivations" class, class 2 is similar to the "mating prowess" class, and class 3 is similar to the "social needs" class.
 
 # Distal Outcomes Analyses
 
@@ -394,7 +390,7 @@ results_f <- results_f %>% mutate(odds_predicted_class_2_0.01 = exp(results_f$b_
                               odds_predicted_class_3_0.01 = exp(results_f$b_intercept_0.01)*exp(results_f$b_predicted_class_3_0.01),
                               odds_predicted_class_1_0.01 = exp(results_f$b_intercept_0.01))
 #Change order of rows for unity with other tables
-results_f <- results_f[c(10, 11, 12, 17, 7, 8, 1, 4, 14, 9, 2, 5, 15, 16, 3, 13, 6),]
+results_f <- results_f[c(10, 11, 12, 17, 7, 8, 1, 4, 14, 16, 3, 13, 6),] #exclude YP items 9, 2, 5, 15
 #Pretty output
 flextable(results_f, col_keys=c("Proclivity", "p_lr_total_0.01", "b_intercept_0.01", "p_lr_intercept_0.01", "b_predicted_class_2_0.01", "p_lr_predicted_class_2_0.01", "b_predicted_class_3_0.01", "p_lr_predicted_class_3_0.01")) %>% 
   set_formatter(p_lr_total_0.01=function(x) apa(x, decimals=3, leading=F), 
@@ -412,7 +408,7 @@ flextable(results_f, col_keys=c("Proclivity", "p_lr_total_0.01", "b_intercept_0.
 
 ```{r plot_proclivities}
 #rename proclivities for plotting
-procl <- c("Prostitute", "Public porn", "Rape", "Zoophilia", "Porn child", "Porn child darknet", "Chat child", "Gift child", "Sex child", "Porn YP", "Chat YP", "Gift YP", "Sex YP", "Speed", "DUI", "Rob", "Kill")
+procl <- c("Prostitute", "Public porn", "Rape", "Zoophilia", "Porn child", "Porn child darknet", "Chat child", "Gift child", "Sex child", "Speed", "DUI", "Rob", "Kill")
 #Rename proclivities
 plot_results_f <- results_f
 plot_results_f$Proclivity <- procl
@@ -445,20 +441,20 @@ plot_results_2_f$class <- rep(c(2, 3, 1), nrow(plot_results_2_f)/3)
 ggplot(plot_results_f, aes(x=Proclivity, y=odds, group=as.factor(class), linetype=as.factor(class))) +
   geom_line() +
   geom_point(aes(shape=as.factor(class))) +
-  scale_linetype_manual(name=NULL, values=c("solid", "dotted", "dashed"), labels=c("Class 1", "Class 2", "Class 3")) +
-  scale_shape_manual(name=NULL, values=c(0, 3, 1), labels=c("Class 1", "Class 2", "Class 3")) +
+  scale_linetype_manual(name=NULL, values=c("solid", "dotted", "dashed"), labels=c("Class 1: \"Multiple motivations\"", "Class 2: \"Mating prowess\"", "Class 3: \"Social needs\"")) +
+  scale_shape_manual(name=NULL, values=c(0, 3, 1), labels=c("Class 1: \"Multiple motivations\"", "Class 2: \"Mating prowess\"", "Class 3: \"Social needs\"")) +
   theme_classic() +
   theme(axis.text.x=element_text(angle=45, hjust=1, size=8))
 #Odds > 1
 ggplot(plot_results_2_f, aes(x=Proclivity, y=odds, group=as.factor(class), linetype=as.factor(class))) +
   geom_line() +
   geom_point(aes(shape=as.factor(class))) +
-  scale_linetype_manual(name=NULL, values=c("solid", "dotted", "dashed"), labels=c("Class 1", "Class 2", "Class 3")) +
-  scale_shape_manual(name=NULL, values=c(0, 3, 1), labels=c("Class 1", "Class 2", "Class 3")) +
+  scale_linetype_manual(name=NULL, values=c("solid", "dotted", "dashed"), labels=c("Class 1: \"Multiple motivations\"", "Class 2: \"Mating prowess\"", "Class 3: \"Social needs\"")) +
+  scale_shape_manual(name=NULL, values=c(0, 3, 1), labels=c("Class 1: \"Multiple motivations\"", "Class 2: \"Mating prowess\"", "Class 3: \"Social needs\"")) +
   theme_classic() +
   theme(axis.text.x=element_text(angle=45, hjust=1, size=8))
 ```
-*Note.* Prostitute = "Engaging in sexual activity with a prostitute"; Public porn = "Watching porn in public spaces such as a bus or library", Rape = "Engaging in sexual activity with an adult who does not agree or is not able to agree, for example, due to intoxication", Zoophilia = "Engaging in sexual activity with an animal", Porn child = "Watching porn depicting a child", Porn child darknet = "Watching porn depicting a child on the Darknet", Chat child = "Flirting or having sexual conversations via chat or webcam with a child", Gift child = "Paying or giving gifts to a child for online sexual material (for example, videos, images, or online streaming)", Sex child = "Having offline sex or sexual contact with a child", Porn YP = "Watching porn depicting a young person", Chat YP = "Flirting or having sexual conversations via chat or webcam with a young person", Gift YP = "Paying or giving gifts to a young person for online sexual material (for example, videos, images, or online streaming", Sex YP = "Having offline sex or sexual contact with a young person", Kill = "Killing someone", Speed = "Driving faster than the posted speed limit", DUI = "Driving under the influence of drugs/alcohol", Rob = "Robbing a bank"
+*Note.* Prostitute = "Engaging in sexual activity with a prostitute"; Public porn = "Watching porn in public spaces such as a bus or library", Rape = "Engaging in sexual activity with an adult who does not agree or is not able to agree, for example, due to intoxication", Zoophilia = "Engaging in sexual activity with an animal", Porn child = "Watching porn depicting a child", Porn child darknet = "Watching porn depicting a child on the Darknet", Chat child = "Flirting or having sexual conversations via chat or webcam with a child", Gift child = "Paying or giving gifts to a child for online sexual material (for example, videos, images, or online streaming)", Sex child = "Having offline sex or sexual contact with a child", <!--Porn YP = "Watching porn depicting a young person", Chat YP = "Flirting or having sexual conversations via chat or webcam with a young person", Gift YP = "Paying or giving gifts to a young person for online sexual material (for example, videos, images, or online streaming", Sex YP = "Having offline sex or sexual contact with a young person", -->Kill = "Killing someone", Speed = "Driving faster than the posted speed limit", DUI = "Driving under the influence of drugs/alcohol", Rob = "Robbing a bank". Because of the high differences in odds, some of the items are displayed in a separate plot with a different scale.
 
 
 
