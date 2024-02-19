@@ -487,7 +487,7 @@ results <- results %>% mutate(odds_predicted_class_1_0.01 = exp(results$b_interc
                               odds_predicted_class_2_0.01 = exp(results$b_intercept_0.01)*exp(results$b_predicted_class_2_0.01),
                               odds_predicted_class_3_0.01 = exp(results$b_intercept_0.01))
 #Change order of rows for unity with other tables
-results <- results[c(10, 11, 12, 17, 7, 8, 1, 4, 14, 16, 3, 13, 6),]  #without young person items 9, 2, 5, 15,
+results <- results[c(10, 11, 12, 17, 7, 8, 1, 4, 14, 16, 3, 13, 6),]  #without young person items 9, 2, 5, 15
 #Pretty output
 flextable(results, col_keys=c("Proclivity", "p_lr_total_0.01", "b_intercept_0.01", 
                               #"CI_intercept", 
