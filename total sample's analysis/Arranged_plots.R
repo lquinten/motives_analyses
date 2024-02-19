@@ -95,11 +95,12 @@ f2 <- ggplot(plotd_f %>% filter(var=="attr"), aes(x=score)) +
   labs(x="Attraction to children", y="Count")
 
 #Arrange violin plots together ----
-ggarrange(m1, m2, f1, f2,
-          ncol=2, nrow=2,
-          align="hv",
-          labels=c('a)', '', 'b)', ''), font.label=list(size=12, face='plain'), vjust=c(1, 1, 0, 0),
-          common.legend=T, legend='right')
+mf1 <- ggarrange(m1, f1, nrow=2, align="v", 
+                 labels=c('a)', 'b)'), font.label=list(size=12, face='plain'), vjust=c(1, 0), 
+                 common.legend=T, legend='right')
+mf2 <- ggarrange(m2, f2, nrow=2, align="v",
+                 common.legend=T, legend='right')
+ggarrange(mf1, mf2, ncol=2, align='h')
 
 #Prepare odds data ----
 ##1 = females
@@ -225,7 +226,7 @@ plot_results_2$class <- rep(1:3, nrow(plot_results_2)/3)
 
 #Odds plots males ----
 ##line plots odds < 1
-m3 <- ggplot(plot_results, aes(x=Proclivity, y=Odds, group=as.factor(class), linetype=as.factor(class))) +
+m4 <- ggplot(plot_results, aes(x=Proclivity, y=Odds, group=as.factor(class), linetype=as.factor(class))) +
   geom_line() +
   geom_point(aes(shape=as.factor(class))) +
   scale_linetype_manual(name=NULL, values=c("dotted", "dashed", "solid"), labels=c("Class 1: \"Mating prowess\"", 
@@ -237,7 +238,7 @@ m3 <- ggplot(plot_results, aes(x=Proclivity, y=Odds, group=as.factor(class), lin
   theme_classic() +
   theme(axis.text.x=element_text(angle=45, hjust=1, size=8))
 #odds > 1
-m4 <- ggplot(plot_results_2, aes(x=Proclivity, y=Odds, group=as.factor(class), linetype=as.factor(class))) +
+m5 <- ggplot(plot_results_2, aes(x=Proclivity, y=Odds, group=as.factor(class), linetype=as.factor(class))) +
   geom_line() +
   geom_point(aes(shape=as.factor(class))) +
   scale_linetype_manual(name=NULL, values=c("dotted", "dashed", "solid"), labels=c("Class 1: \"Mating prowess\"", 
@@ -251,7 +252,7 @@ m4 <- ggplot(plot_results_2, aes(x=Proclivity, y=Odds, group=as.factor(class), l
 
 #Odds plots females ----
 ##line plots odds < 1
-f3 <- ggplot(plot_results_f, aes(x=Proclivity, y=Odds, group=as.factor(class), linetype=as.factor(class))) +
+f4 <- ggplot(plot_results_f, aes(x=Proclivity, y=Odds, group=as.factor(class), linetype=as.factor(class))) +
   geom_line() +
   geom_point(aes(shape=as.factor(class))) +
   scale_linetype_manual(name=NULL, values=c("solid", "dotted", "dashed"), labels=c("Class 1: \"Multiple motivations\"", 
@@ -262,7 +263,7 @@ f3 <- ggplot(plot_results_f, aes(x=Proclivity, y=Odds, group=as.factor(class), l
   theme_classic() +
   theme(axis.text.x=element_text(angle=45, hjust=1, size=8))
 #odds > 1
-f4 <- ggplot(plot_results_2_f, aes(x=Proclivity, y=Odds, group=as.factor(class), linetype=as.factor(class))) +
+f5 <- ggplot(plot_results_2_f, aes(x=Proclivity, y=Odds, group=as.factor(class), linetype=as.factor(class))) +
   geom_line() +
   geom_point(aes(shape=as.factor(class))) +
   scale_linetype_manual(name=NULL, values=c("solid", "dotted", "dashed"), labels=c("Class 1: \"Multiple motivations\"", 
@@ -275,9 +276,9 @@ f4 <- ggplot(plot_results_2_f, aes(x=Proclivity, y=Odds, group=as.factor(class),
   theme(axis.text.x=element_text(angle=45, hjust=1, size=8))
 
 #Arrange odds plots together ----
-f5 <- ggarrange(f3, f4, ncol=2, align="v", common.legend=T, legend='right')
-m5 <- ggarrange(m3, m4, ncol=2, align="v", common.legend=T, legend='right')
-ggarrange(m5, f5,
+f6 <- ggarrange(f4, f5, ncol=2, align="v", common.legend=T, legend='right')
+m6 <- ggarrange(m4, m5, ncol=2, align="v", common.legend=T, legend='right')
+ggarrange(m6, f6,
           nrow=2,
           labels=c('a)','b)'), font.label=list(size=12, face='plain'), vjust=c(1, 1))
 
