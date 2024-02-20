@@ -11,7 +11,7 @@ library(tidyverse)
 *1) Correlations for the Male Subsample*
 
 ```{r correlation_male}
-data_m <- haven::read_spss("./data/dataE_clear5 2209.sav") %>% dplyr::select(CASE, gender, sexdrive2, CSBD, PPCS_6, meffort, socialanx, lon, mvalue, attr, starts_with("Y") & ends_with("r") & !ends_with("YP_r")) %>% #remove YP items
+data_m <- haven::read_spss("./data/dataE_2112.sav") %>% dplyr::select(CASE, gender, sexdrive2, CSBD, PPCS_6, meffort, socialanx, lon, mvalue, attr, starts_with("Y") & ends_with("r") & !ends_with("YP_r")) %>% #remove YP items
   filter(gender == 2) %>% dplyr::select(-gender)
 
 colnames(data_m) <- c("CASE","Sex drive", "Compulsive sex. behaviour", "Probl. porn use", "Mating effort", "Social anxiety", "Loneliness", "Mate value", "Sexual interest in children", "Speed", "DUI", "Rob a bank", "Kill someone", "Sex with prostitute", "Sex without consent", "Sex with animal", "Watch porn in public", "Watch CSEM", "Watch CSEM in darknet", "Online sex chat with child", "Pay/gift for CSEM", "Contact sex with child")
@@ -36,7 +36,7 @@ ggsave("./out/corrplot_m.jpg", device="jpeg")
 *2) Correlations for the Female Subsample*
 
 ```{r correlation_male}
-data_f <- haven::read_spss("./data/dataE_clear5 2209.sav") %>% dplyr::select(CASE, gender, sexdrive2, CSBD, PPCS_6, meffort, socialanx, lon, mvalue, attr, starts_with("Y") & ends_with("r") & !ends_with("YP_r")) %>% filter(gender == 1) %>% dplyr::select(-gender)
+data_f <- haven::read_spss("./data/dataE_2112.sav") %>% dplyr::select(CASE, gender, sexdrive2, CSBD, PPCS_6, meffort, socialanx, lon, mvalue, attr, starts_with("Y") & ends_with("r") & !ends_with("YP_r")) %>% filter(gender == 1) %>% dplyr::select(-gender)
 
 colnames(data_f) <- c("CASE","Sex drive", "Compulsive sex. behaviour", "Probl. porn use", "Mating effort", "Social anxiety", "Loneliness", "Mate value", "Sexual interest in children", "Speed", "DUI", "Rob a bank", "Kill someone", "Sex with prostitute", "Sex without consent", "Sex with animal", "Watch porn in public", "Watch CSEM", "Watch CSEM in darknet", "Online sex chat with child", "Pay/gift for CSEM", "Contact sex with child")
 
@@ -60,7 +60,7 @@ ggsave("./out/corrplot_f.jpg", device="jpeg")
 *3) Correlations for the Entire Sample*
 
 ```{r correlation_whole}
-data <- haven::read_spss("./data/dataE_clear5 2209.sav") %>% dplyr::select(CASE, sexdrive2, CSBD, PPCS_6, meffort, socialanx, lon, mvalue, attr, starts_with("Y") & ends_with("r") & !ends_with("YP_r"))
+data <- haven::read_spss("./data/dataE_2112.sav") %>% dplyr::select(CASE, sexdrive2, CSBD, PPCS_6, meffort, socialanx, lon, mvalue, attr, starts_with("Y") & ends_with("r") & !ends_with("YP_r"))
 # creating correlation matrix
 corr_mat <- round(cor(data %>% select(-CASE), method="spearman"), 2)
 #p.mat <- ggcorrplot::cor_pmat(data %>% select(-CASE)) #if we want to include p values

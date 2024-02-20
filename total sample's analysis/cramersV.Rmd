@@ -5,32 +5,22 @@ date: "2024-02-19"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
+```{r setup, include=F}
 knitr::opts_chunk$set(echo = TRUE)
-```
-
-```{r library}
-
 library(tidyverse)
 ```
 
 ```{r data}
-
-setwd("C:/Users/gniel/OneDrive - MSB Medical School Berlin/Project special issue/LPA_analysis/total sample's analysis")
-data <-  haven::read_spss("./data/dataE_clear5 2209.sav") %>% dplyr::select(CASE, gender, starts_with("Y") & ends_with("r"))
+data <-  haven::read_spss("./data/dataE_2112.sav") %>% dplyr::select(CASE, gender, starts_with("Y") & ends_with("r"))
 
 #Exclude Youth variables
 data <- data %>% select(-ends_with("Yp"))
 
 data <- data %>% filter(gender == 1 | gender == 2)
-
 ```
 
-```{r}
-
+```{r CIs}
 V <- tibble(variables = data %>% select(-CASE, -gender) %>% colnames())
-
-
 
 xi2 <- lapply(data %>% select(-CASE, -gender) %>% colnames(), function(x){chisq.test(data %>% pull(x), data$gender, correct=FALSE)})
 
