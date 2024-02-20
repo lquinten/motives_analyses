@@ -13,12 +13,16 @@ library(tidyverse)
 ```{r correlation_male}
 data_m <- haven::read_spss("./data/dataE_2112.sav") %>% dplyr::select(CASE, gender, sexdrive2, CSBD, PPCS_6, meffort, socialanx, lon, mvalue, attr, starts_with("Y") & ends_with("r") & !ends_with("YP_r")) %>% #remove YP items
   filter(gender == 2) %>% dplyr::select(-gender)
+
+colnames(data_m) <- c("CASE","Sex drive", "Compulsive sex. behaviour", "Probl. porn use", "Mating effort", "Social anxiety", "Loneliness", "Mate value", "Sexual interest in children", "Speed", "DUI", "Rob a bank", "Kill someone", "Sex with prostitute", "Sex without consent", "Sex with animal", "Watch porn in public", "Watch CSEM", "Watch CSEM in darknet", "Online sex chat with child", "Pay/gift for CSEM", "Contact sex with child")
+
+data_m <- data_m%>% select("CASE","Sexual interest in children","Sex drive", "Compulsive sex. behaviour", "Probl. porn use", "Mating effort", "Social anxiety", "Loneliness", "Mate value", "Sex with prostitute", "Watch porn in public", "Sex without consent", "Sex with animal", "Watch CSEM", "Watch CSEM in darknet", "Online sex chat with child", "Pay/gift for CSEM", "Contact sex with child", "Speed", "DUI", "Rob a bank", "Kill someone") %>% rev()
+
 # creating correlation matrix
 corr_mat_m <- round(cor(data_m %>% select(-CASE), method="spearman"), 2)
 
-colnames(corr_mat_m) <- c("Sex drive", "Compulsive sex.", "Probl. porn use", "Mating effort", "Social anxiety", "Loneliness", "Mate value", "Attraction to children", "Speed", "DUI", "Rob", "Kill", "Prostitute", "Rape", "Zoophilia", "Public porn", "Porn child", "Porn child darknet", "Chat child", "Gift child", "Sex child")
 rownames(corr_mat_m) <- colnames(corr_mat_m)
-ggcorrplot::ggcorrplot(corr_mat_m, hc.order=T, outline.col="white", legend.title="Correlation", colors=c("#0072B2", "white", "#D55E00")) +
+ggcorrplot::ggcorrplot(corr_mat_m, hc.order=F, outline.col="white", legend.title="Correlation", colors=c("#0072B2", "white", "#D55E00")) +
   labs(x="", y="") +
   theme_classic() +
   theme(axis.text.x=element_text(angle=50, hjust=1, size=9, 
@@ -26,18 +30,23 @@ ggcorrplot::ggcorrplot(corr_mat_m, hc.order=T, outline.col="white", legend.title
                                           rep("bold", 4), rep("plain", 4))),
         axis.text.y=element_text(face = c(rep("bold", 3), rep('plain', 4), "bold", rep('plain', 5),
                                           rep("bold", 4), rep("plain", 4))))
+ggsave("./out/corrplot_m.jpg", device="jpeg")
 ```
 
 *2) Correlations for the Female Subsample*
 
 ```{r correlation_male}
 data_f <- haven::read_spss("./data/dataE_2112.sav") %>% dplyr::select(CASE, gender, sexdrive2, CSBD, PPCS_6, meffort, socialanx, lon, mvalue, attr, starts_with("Y") & ends_with("r") & !ends_with("YP_r")) %>% filter(gender == 1) %>% dplyr::select(-gender)
+
+colnames(data_f) <- c("CASE","Sex drive", "Compulsive sex. behaviour", "Probl. porn use", "Mating effort", "Social anxiety", "Loneliness", "Mate value", "Sexual interest in children", "Speed", "DUI", "Rob a bank", "Kill someone", "Sex with prostitute", "Sex without consent", "Sex with animal", "Watch porn in public", "Watch CSEM", "Watch CSEM in darknet", "Online sex chat with child", "Pay/gift for CSEM", "Contact sex with child")
+
+data_f <- data_f%>% select("CASE","Sexual interest in children","Sex drive", "Compulsive sex. behaviour", "Probl. porn use", "Mating effort", "Social anxiety", "Loneliness", "Mate value", "Sex with prostitute", "Watch porn in public", "Sex without consent", "Sex with animal", "Watch CSEM", "Watch CSEM in darknet", "Online sex chat with child", "Pay/gift for CSEM", "Contact sex with child", "Speed", "DUI", "Rob a bank", "Kill someone") %>% rev()
+
 # creating correlation matrix
 corr_mat_f <- round(cor(data_f %>% select(-CASE), method="spearman"), 2)
 
-colnames(corr_mat_f) <- c("Sex drive", "Compulsive sex.", "Probl. porn use", "Mating effort", "Social anxiety", "Loneliness", "Mate value", "Attraction to children", "Speed", "DUI", "Rob", "Kill", "Prostitute", "Rape", "Zoophilia", "Public porn", "Porn child", "Porn child darknet", "Chat child", "Gift child", "Sex child")
 rownames(corr_mat_f) <- colnames(corr_mat_f)
-ggcorrplot::ggcorrplot(corr_mat_f, hc.order=T, outline.col="white", legend.title="Correlation", colors=c("#0072B2", "white", "#D55E00")) +
+ggcorrplot::ggcorrplot(corr_mat_f, hc.order=F, outline.col="white", legend.title="Correlation", colors=c("#0072B2", "white", "#D55E00")) +
   labs(x="", y="") +
   theme_classic() +
   theme(axis.text.x=element_text(angle=50, hjust=1, size=9, 
@@ -45,6 +54,7 @@ ggcorrplot::ggcorrplot(corr_mat_f, hc.order=T, outline.col="white", legend.title
                                           rep("bold", 2))),
         axis.text.y=element_text(face = c(rep("bold", 5), rep('plain', 2), "bold", rep('plain', 11),
                                           rep("bold", 2))))
+ggsave("./out/corrplot_f.jpg", device="jpeg")
 ```
 
 *3) Correlations for the Entire Sample*

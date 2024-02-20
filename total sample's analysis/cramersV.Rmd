@@ -1,0 +1,50 @@
+---
+title: "ChiSquareTests"
+author: "Frederic Gnielka"
+date: "2024-02-19"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r library}
+
+library(tidyverse)
+```
+
+```{r data}
+
+setwd("C:/Users/gniel/OneDrive - MSB Medical School Berlin/Project special issue/LPA_analysis/total sample's analysis")
+data <-  haven::read_spss("./data/dataE_clear5 2209.sav") %>% dplyr::select(CASE, gender, starts_with("Y") & ends_with("r"))
+
+#Exclude Youth variables
+data <- data %>% select(-ends_with("Yp"))
+
+data <- data %>% filter(gender == 1 | gender == 2)
+
+```
+
+```{r}
+
+V <- tibble(variables = data %>% select(-CASE, -gender) %>% colnames())
+
+
+
+xi2 <- lapply(data %>% select(-CASE, -gender) %>% colnames(), function(x){chisq.test(data %>% pull(x), data$gender, correct=FALSE)})
+
+Vs <- lapply(xi2, confintr::ci_cramersv, type="bootstrap", boot_type="bca", seed = 42)
+
+V <- V %>% mutate(xi.2 = sapply(xi2, function(x){x$statistic}),
+                  p.value = sapply(xi2, function(x){x$p.value}),
+                  cramers.v = sapply(Vs, function(x){x$estimate}),
+                  lower.ci = sapply(Vs, function(x){x$interval[1]}), 
+                  upper.ci = sapply(Vs, function(x){x$interval[2]}))
+
+V <- V %>% mutate(cramers.v = cramers.v %>% round(2), upper.ci = upper.ci %>% round(2), lower.ci = lower.ci %>% round(2), xi.2 = xi.2 %>% round(2), p.value = p.value %>% round(3))
+
+V <- V %>% select(variables, xi.2, p.value, cramers.v, lower.ci, upper.ci)
+```
+
+
