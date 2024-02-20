@@ -19,7 +19,7 @@ check_required_packages(packages)
 lapply(packages, require, character.only=T)
 
 #load data
-data <- haven::read_spss("./data/dataE_clear5 2209.sav") %>% select(CASE, sexdrive2, CSBD, PPCS_6, meffort, socialanx, lon, mvalue, attr)
+data <- haven::read_spss("./data/dataE_2112.sav") %>% select(CASE, sexdrive2, CSBD, PPCS_6, meffort, socialanx, lon, mvalue, attr)
 
 colnames(data) <- c("uid", "sex_drive", "csbd", "ppcs", "soi_r_me", "social_anxiety", "lon", "mvs", "attraction_to_children")
 

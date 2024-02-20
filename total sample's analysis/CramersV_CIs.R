@@ -1,7 +1,7 @@
 #load libraries and packages
 library(tidyverse)
 library(confintr)
-d <- haven::read_spss("./data/dataE_clear5 2209.sav") %>% 
+d <- haven::read_spss("./data/dataE_2112.sav") %>% 
   dplyr::select(CASE, gender, educ, work, sexOrien, single, dating, notLT, rel_LT, engaged, married, 
                 divorced, widowed)
 #exclude genders other than male & female

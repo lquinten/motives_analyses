@@ -314,7 +314,7 @@ BCH_expanded_dataframe <- BCH_expanded_dataframe %>% mutate(predicted_class = vc
 BCH_expanded_dataframe <- fastDummies::dummy_cols(BCH_expanded_dataframe, select_columns = "predicted_class")
 
 #Combine the expanded dataframe with the outcome variables
-BCH_expanded_dataframe <- BCH_expanded_dataframe %>% full_join(y=haven::read_spss("./data/data raw/dataE_clear5 2209.sav") %>% filter(gender == 2) %>% select(CASE, starts_with("Y_") & ends_with("r")) %>% mutate(CASE = CASE %>% as.numeric()),by="CASE")
+BCH_expanded_dataframe <- BCH_expanded_dataframe %>% full_join(y=haven::read_spss("./data/data raw/dataE_2112.sav") %>% filter(gender == 2) %>% select(CASE, starts_with("Y_") & ends_with("r")) %>% mutate(CASE = CASE %>% as.numeric()),by="CASE")
 ```
 
 Significance of regression weights was tested using a penalised LRT, as implemented by the R package logistf (Heinze et al., 2023), which was also used to estimate the FLIC models. To make the estimation for the model with the proclivity to have sex with a prostitute item possible, the iteratively weighted least squares method instead of the standard Newton-Raphson approach had to be used for optimisation.

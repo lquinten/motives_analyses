@@ -12,12 +12,12 @@ load(".RData") #load a pre-saved .RData file in which the environment is saved
 
 #Prepare gender data ----
 ##1 = female gender
-data_females <- haven::read_spss("./data/dataE_clear5 2209.sav") %>% 
+data_females <- haven::read_spss("./data/dataE_2112.sav") %>% 
   dplyr::select(gender, CASE, sexdrive2, CSBD, PPCS_6, meffort, socialanx, lon, mvalue, attr) %>% 
   filter(gender == 1) %>% 
   dplyr::select(-gender)
 ##2 = male gender
-data_males <- haven::read_spss("./data/dataE_clear5 2209.sav") %>% 
+data_males <- haven::read_spss("./data/dataE_2112.sav") %>% 
   dplyr::select(gender, CASE, sexdrive2, CSBD, PPCS_6, meffort, socialanx, lon, mvalue, attr) %>% 
   filter(gender == 2) %>% 
   dplyr::select(-gender)
