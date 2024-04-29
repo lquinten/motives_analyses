@@ -1,0 +1,86 @@
+================================================================================
+MODEL REPORT
+================================================================================
+    ============================================================================
+    Measurement model parameters
+    ============================================================================
+          model_name      binary                
+          class_no             0       1       2
+          param variable                        
+          pis   CSBD      0.4783  0.3062  0.9209
+                PPCS_6    0.3808  0.2545  0.7049
+                attr      0.0103  0.0000  0.0366
+
+
+          model_name        categorical                
+          class_no                    0       1       2
+          param variable                               
+          pis   lon_1            0.0566  0.5579  0.2880
+                lon_2            0.1399  0.2885  0.2655
+                lon_3            0.3264  0.1268  0.2577
+                lon_4            0.4770  0.0268  0.1888
+                meffort_1        0.3752  0.2502  0.0236
+                meffort_2        0.3464  0.2335  0.1723
+                meffort_3        0.2046  0.3078  0.3588
+                meffort_4        0.0738  0.2085  0.4452
+                mvalue_1         0.4676  0.1361  0.1571
+                mvalue_2         0.2676  0.2837  0.2551
+                mvalue_3         0.1703  0.2521  0.2314
+                mvalue_4         0.0944  0.3280  0.3565
+                sexdrive2_1      0.4829  0.3069  0.1610
+                sexdrive2_2      0.1766  0.2858  0.1598
+                sexdrive2_3      0.2273  0.2466  0.3667
+                sexdrive2_4      0.1133  0.1608  0.3125
+                socialanx_1      0.0294  0.6414  0.3966
+                socialanx_2      0.2030  0.1695  0.1845
+                socialanx_3      0.3812  0.1635  0.2809
+                socialanx_4      0.3865  0.0256  0.1380
+
+
+    ============================================================================
+    Structural model parameters
+    ============================================================================
+          model_name                       binary                
+          class_no                              0       1       2
+          param variable                                         
+          pis   Y_proclChatChild_r         0.0028  0.0044  0.0137
+                Y_proclChatYp_r            0.0641  0.0246  0.1150
+                Y_proclDui_r               0.3754  0.3568  0.6664
+                Y_proclGiftChild_r         0.0000  0.0000  0.0052
+                Y_proclGiftYp_r            0.0007  0.0025  0.0144
+                Y_proclKill_r              0.2508  0.0773  0.3146
+                Y_proclPornChildDarknet_r  0.0046  0.0000  0.0245
+                Y_proclPornChild_r         0.0109  0.0000  0.0288
+                Y_proclPornYp_r            0.0613  0.0157  0.1073
+                Y_proclProstitute_r        0.2094  0.0802  0.3659
+                Y_proclPublic_r            0.1517  0.0801  0.3802
+                Y_proclRape_r              0.0273  0.0081  0.0541
+                Y_proclRob_r               0.5552  0.5130  0.7646
+                Y_proclSexChild_r          0.0000  0.0000  0.0104
+                Y_proclSexYp_r             0.0870  0.0558  0.1397
+                Y_proclSpeed_r             0.9365  0.9370  0.9535
+                Y_proclZoo_r               0.0018  0.0009  0.0296
+    ============================================================================
+    Class weights
+    ============================================================================
+        Class 1 : 0.38
+        Class 2 : 0.42
+        Class 3 : 0.20
+    ============================================================================
+    Fit for 3 latent classes
+    ============================================================================
+    Estimation method             : 3-step
+    Correction method             : BCH
+    Assignment method             : modal
+    Number of observations        : 1420
+    Number of latent classes      : 3
+    Number of estimated parameters: 122
+    Log-likelihood (LL)           : -16843.5374
+    -2LL                          : 33687.0747
+    Average LL                    : -11.8616
+    AIC                           : 33931.07
+    BIC                           : 34572.60
+    CAIC                          : 34694.60
+    Sample-Size Adjusted BIC      : 35070.58
+    Entropy                       : 508.6154
+    Scaled Relative Entropy       : 0.6740
