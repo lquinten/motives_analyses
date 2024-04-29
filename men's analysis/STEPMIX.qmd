@@ -1,0 +1,29 @@
+---
+title: "STEPMIX"
+format: docx
+editor: visual
+---
+
+```{r}
+#| label: setup
+library(tidyverse)
+library(rio)
+
+# Data
+cv_res_males <- import("cv_results_males.csv")
+cv_res_males$V1 <- cv_res_males$V1+1
+```
+
+```{r}
+#| label: plot
+ggplot(cv_res_males, aes(x=V1, y=`Val. Log Likelihood`)) +
+  geom_line(size=1.2) +
+  scale_x_continuous(breaks=c(1:7)) +
+  scale_y_continuous(labels=function(x) format(x, big.mark=",")) +
+  labs(x="Classes", y="CV LogLikelihood") +
+  theme_classic()
+```
+
+*Note.* CV LogLikelihood = mean log-likelihood over all holdout-samples.
+
+
