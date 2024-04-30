@@ -8,14 +8,14 @@ editor: visual
 #| label: setup
 library(tidyverse)
 library(rio)
-
-# Data
-cv_res_males <- import("cv_results_males.csv")
-cv_res_males$V1 <- cv_res_males$V1+1
 ```
 
 ```{r}
-#| label: plot
+# Data
+cv_res_males <- import("cv_results_males.csv")
+cv_res_males$V1 <- cv_res_males$V1+1
+
+# Plot
 ggplot(cv_res_males, aes(x=V1, y=`Val. Log Likelihood`)) +
   geom_line(size=1.2) +
   scale_x_continuous(breaks=c(1:7)) +
@@ -25,5 +25,31 @@ ggplot(cv_res_males, aes(x=V1, y=`Val. Log Likelihood`)) +
 ```
 
 *Note.* CV LogLikelihood = mean log-likelihood over all holdout-samples.
+
+```{r}
+# Data
+param_males <- import("C:/Users/Rebecca/Documents/GitHub/LPA_analysis/men's analysis/paramaters_males_k3.csv")
+
+param_males <- param_males %>% mutate(class_no=class_no+1) %>% 
+  filter(!str_detect(variable, "Y_"), model_name!="class_weights") %>% 
+  mutate(variable=case_when(variable=="attr" ~ str_c(variable, "_1"), .default=variable))
+param_males <- rbind(param_males, param_males %>% filter(model_name=="binary") %>%
+                       mutate(value=1-value, variable=str_replace(variable, "_1", "_2"))) %>% 
+  mutate(variable=str_replace(variable, "_6", "6")) %>% 
+  arrange(variable) %>% 
+  separate_wider_delim(variable, "_", names=c("variable", "category"))
+
+# Plot
+ggplot(param_males, aes(x=variable, y=value, fill=category)) +
+    geom_bar(stat="identity", position="stack") +
+    facet_grid(. ~ class_no)
+```
+
+
+
+
+
+
+
 
 
