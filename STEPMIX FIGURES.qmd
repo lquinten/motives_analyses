@@ -19,7 +19,7 @@ library(rio)
 ## a) Males
 
 # Data
-data_males <- haven::read_spss("./total sample's analysis/data/dataE_clear5 2209.sav") %>% 
+data_males <- haven::read_spss("./total sample's analysis/data/dataE_1402.sav") %>% 
   select(gender, CASE, sexdrive2, CSBD, PPCS_6, meffort, socialanx, lon, mvalue, attr) %>% 
   filter(gender == 2) %>% 
   select(-gender)
@@ -62,7 +62,7 @@ m2 <- ggplot(plotd_m %>% filter(var=="attr"), aes(x=score)) +
 ## b) Females
 
 # Data
-data_females <- haven::read_spss("./total sample's analysis/data/dataE_clear5 2209.sav") %>% 
+data_females <- haven::read_spss("./total sample's analysis/data/dataE_1402.sav") %>% 
   select(gender, CASE, sexdrive2, CSBD, PPCS_6, meffort, socialanx, lon, mvalue, attr) %>% 
   filter(gender == 1) %>% 
   select(-gender)
@@ -280,7 +280,7 @@ ggplot(prob_females, aes(x=variable, y=value, group=as.factor(class_no), linetyp
 
 ```{r}
 # Data
-data <- haven::read_spss("./total sample's analysis/data/dataE_clear5 2209.sav") %>% 
+data <- haven::read_spss("./total sample's analysis/data/dataE_1402.sav") %>% 
   select(CASE, sexdrive2, CSBD, PPCS_6, meffort, socialanx, lon, mvalue, attr)
 
 # Create long data frame for plotting, including only the relevant variables
