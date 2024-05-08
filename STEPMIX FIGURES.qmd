@@ -1,0 +1,373 @@
+---
+title: "STEPMIX"
+format: docx
+editor: visual
+---
+
+```{r}
+#| label: setup
+library(tidyverse)
+library(ggpubr)
+library(rio)
+```
+
+**Figure 1**
+
+*Scale Distributions of the Motivational Factors with Quantiles: a) Male Subsample (n = 1,263), b) Female Subsample (n = 1,420)*
+
+```{r}
+## a) Males
+
+# Data
+data_males <- haven::read_spss("./total sample's analysis/data/dataE_clear5 2209.sav") %>% 
+  select(gender, CASE, sexdrive2, CSBD, PPCS_6, meffort, socialanx, lon, mvalue, attr) %>% 
+  filter(gender == 2) %>% 
+  select(-gender)
+
+# Create long data frame for plotting, including only the relevant variables
+plotd_m <- data_males %>% pivot_longer(cols=sexdrive2:attr, names_to="var", values_to="score")
+
+# Create a table with the quantiles for each variable
+quant_m <- as.data.frame(t(do.call(rbind.data.frame, (lapply(c("CSBD", "lon", "meffort", "mvalue", "PPCS_6", "sexdrive2", "socialanx"),
+                                                             function(x){parse_number(gsub(",.*$", "",
+                                                                                           levels(cut_number(as.data.frame(data_males)[, x],
+                                                                                                             4))))}))))) %>% 
+  rename(CSBD=V1, lon=V2, meffort=V3, mvalue=V4, PPCS_6=V5, sexdrive2=V6, socialanx=V7) %>% #rename columns
+  pivot_longer(cols=CSBD:socialanx, names_to='var') #pivot for plotting
+
+# Call on function in other R script
+source("./total sample's analysis/functions/flat_violin.R")
+
+# Plot
+m1 <- ggplot(plotd_m %>% filter(var!="attr"), aes(x=factor(var, levels=c('sexdrive2', 'CSBD', 'PPCS_6', 'meffort', 'mvalue', 'socialanx', 'lon')), 
+                                            y=score, fill=var)) +
+  geom_flat_violin(scale="width") +
+  scale_fill_grey(start=.5, end=.9, aesthetics = "fill") +
+  geom_dotplot(binaxis="y", dotsize=.04, stackdir="down", binwidth=.3, position=position_nudge(-.025)) +
+  geom_errorbar(data=quant_m, aes(x=as.factor(var), ymin=value, ymax=value, linetype="Quantiles"), inherit.aes=F, linewidth=.5, width=.3, position=position_nudge(x=.15)) +
+  scale_linetype_manual(values="solid") +
+  guides(linetype=guide_legend(""), fill="none") +
+  scale_x_discrete(labels=NULL) +
+  labs(x="", y="Value") +
+  theme_classic() +
+  theme(axis.text.x=element_text(angle=45, hjust=1, size=10))
+
+# Plot attraction to children separately
+m2 <- ggplot(plotd_m %>% filter(var=="attr"), aes(x=score)) +
+  geom_bar() +
+  theme_classic() +
+  labs(x="", y="Count")
+
+
+## b) Females
+
+# Data
+data_females <- haven::read_spss("./total sample's analysis/data/dataE_clear5 2209.sav") %>% 
+  select(gender, CASE, sexdrive2, CSBD, PPCS_6, meffort, socialanx, lon, mvalue, attr) %>% 
+  filter(gender == 1) %>% 
+  select(-gender)
+
+# Create long data frame for plotting, including only the relevant variables
+plotd_f <- data_females %>% select(CASE, sexdrive2, CSBD, PPCS_6, meffort, socialanx, lon, mvalue, attr) %>% 
+  pivot_longer(cols=sexdrive2:attr, names_to="var", values_to="score")
+
+# Create a table with the quantiles for each variable (except CSBD & PPCS_6)
+quant_f <- as.data.frame(t(do.call(rbind.data.frame, (lapply(c("lon", "meffort", "mvalue", "sexdrive2", "socialanx"), 
+                                                             function(x){parse_number(gsub(",.*$", "", levels(cut_number(
+                                                               as.data.frame(data_females)[, x], 4))))}))))) %>% 
+  rename(lon=V1, meffort=V2, mvalue=V3, sexdrive2=V4, socialanx=V5) %>% #rename columns
+  pivot_longer(cols=lon:socialanx, names_to='var') %>% #pivot for plotting
+  rbind(pivot_longer(as.data.frame(t(do.call(rbind.data.frame,
+                                             (lapply(c("CSBD", "PPCS_6"), function(x){
+                                               parse_number(gsub(",.*$", "",levels(cut_number(as.data.frame(
+                                                 data_females)[, x], 2))))}))))), cols=V1:V2, names_to='var')) %>% #add CSBD & PPCS_6 manually because they can only be dichotomised
+  mutate(var=case_when(var=="V1" ~ "CSBD", .default=var),
+         var=case_when(var=="V2" ~ "PPCS_6", .default=var))
+
+# Plot
+f1 <- ggplot(plotd_f %>% filter(var!="attr"), aes(x=factor(var, levels=c('sexdrive2', 'CSBD', 'PPCS_6', 'meffort', 'mvalue', 'socialanx',
+                                                                         'lon')), y=score, fill=var)) +
+  geom_flat_violin(scale="width") +
+  scale_fill_grey(start=.5, end=.9, aesthetics = "fill") +
+  geom_dotplot(binaxis="y", dotsize=.04, stackdir="down", binwidth=.3, position=position_nudge(-.025)) +
+  geom_errorbar(data=quant_f, aes(x=as.factor(var), ymin=value, ymax=value, linetype="Quantiles"), 
+                inherit.aes=F, linewidth=.5, width=.3, position=position_nudge(x=.15)) +
+  scale_linetype_manual(values="solid") +
+  guides(linetype=guide_legend(""), fill="none") +
+  scale_x_discrete(labels=c("CSBD"="Compulsive sex.", "lon"="Loneliness", "meffort"="Mating effort", "mvalue"="Mate value", 
+                            "PPCS_6"="Probl. porn use", "sexdrive2"="Sex drive", "socialanx"="Social anxiety")) +
+  labs(x="", y="Value") +
+  theme_classic() +
+  theme(axis.text.x=element_text(angle=45, hjust=1, size=10))
+
+# Plot attraction to children separately
+f2 <- ggplot(plotd_f %>% filter(var=="attr"), aes(x=score)) +
+  geom_bar() +
+  theme_classic() +
+  labs(x="Sex. interest children", y="Count")
+
+
+## Arrange violin plots together
+mf1 <- ggarrange(m1, f1, nrow=2, align="v", 
+                 labels=c('a)', 'b)'), font.label=list(size=12, face='plain'), vjust=c(1, 0), 
+                 common.legend=T, legend='right')
+mf2 <- ggarrange(m2, f2, nrow=2, align="v",
+                 common.legend=T, legend='right')
+ggarrange(mf1, mf2, ncol=2, align='h')
+```
+
+*Note.* As some of the distributions are rather skewed, the variables were split into quantiles for LCA (except for sexual interest in children in the male subsample, and except for sexual interest in children, problematic porn use, and compulsive sexual behaviour in the female subsample). Descriptives and gender differences for the motivational factors are available in the online supplement (Table C).
+
+**Figure 2**
+
+*Conditional Item Probabilities per Class*
+
+*a) Male Subsample (n = 1,263)*
+
+```{r}
+## a) Males
+
+# Data
+param_males <- import("./men's analysis/paramaters_males_k3.csv") %>% 
+  mutate(class_no=class_no+1) %>% 
+  filter(!str_detect(variable, "Y_"), model_name!="class_weights") %>% 
+  mutate(variable=case_when(variable=="attr" ~ str_c(variable, "_2"), .default=variable))
+param_males <- rbind(param_males, param_males %>% filter(model_name=="binary") %>%
+                       mutate(value=1-value, variable=str_replace(variable, "_2", "_1"))) %>% 
+  mutate(variable=str_replace(variable, "_6", "6")) %>% 
+  arrange(variable) %>% 
+  separate_wider_delim(variable, "_", names=c("variable", "Category")) %>% 
+  mutate(class_no=case_when(class_no==1 ~ 'Class 1: "Multiple motivations"',
+                            class_no==2 ~ 'Class 2: "Mating prowess"',
+                            class_no==3 ~ 'Class 3: "Social needs"'))
+
+# Plot
+ggplot(param_males, aes(x=factor(variable, levels=c('attr', 'sexdrive2', 'CSBD', 'PPCS6', 'meffort', 'mvalue', 'socialanx', 'lon')),
+                        y=value, fill=Category)) +
+  geom_bar(stat="identity", position=position_fill(reverse=TRUE)) +
+  facet_grid(. ~ class_no) +
+  scale_fill_grey(start = 0.9, end = 0.5, aesthetics = "fill") +
+  scale_x_discrete(labels=c("attr"="Sex. interest children", "CSBD"="Compulsive sex.", "lon"="Loneliness", "meffort"="Mating effort", "mvalue"="Mate value", "PPCS6"="Probl. porn use", "sexdrive2"="Sex drive", "socialanx"="Social anxiety")) +
+  scale_y_continuous(expand = c(0,0)) +
+  labs(x="", y="") +
+  theme_classic() +
+  theme(axis.text.x=element_text(angle=65, hjust=1, size=10))
+```
+
+*b) Female Subsample (n = 1,420)*
+
+```{r}
+## b) Females
+
+# Data
+param_females <- import("./women's analysis/parameters_females_k3.csv") %>%
+  mutate(class_no=class_no+1) %>% 
+  filter(!str_detect(variable, "Y_"), model_name!="class_weights") %>% 
+  mutate(variable=case_when(variable=="attr" | variable=="CSBD" | variable=="PPCS_6" ~ str_c(variable, "_2"), .default=variable))
+param_females <- rbind(param_females, param_females %>% filter(model_name=="binary") %>%
+                       mutate(value=1-value, variable=str_replace(variable, "_2", "_1"))) %>% 
+  mutate(variable=str_replace(variable, "_6", "6")) %>% 
+  arrange(variable) %>% 
+  separate_wider_delim(variable, "_", names=c("variable", "Category")) %>% 
+  mutate(class_no=case_when(class_no==1 ~ 'Class 1: "Social needs"',
+                            class_no==2 ~ 'Class 2: "Mating prowess"',
+                            class_no==3 ~ 'Class 3: "Multiple motivations"'))
+
+# Plot
+ggplot(param_females, aes(x=factor(variable, levels=c('attr', 'sexdrive2', 'CSBD', 'PPCS6', 'meffort', 'mvalue', 'socialanx', 'lon')), 
+                          y=value, fill=Category)) +
+  geom_bar(stat="identity", position=position_fill(reverse=TRUE)) +
+  facet_grid(. ~ class_no) +
+  scale_fill_grey(start = 0.9, end = 0.5, aesthetics = "fill") +
+  scale_x_discrete(labels=c("attr"="Sex. interest children", "CSBD"="Compulsive sex.", "lon"="Loneliness", "meffort"="Mating effort", "mvalue"="Mate value", "PPCS6"="Probl. porn use", "sexdrive2"="Sex drive", "socialanx"="Social anxiety")) +
+  scale_y_continuous(expand = c(0,0)) +
+  labs(x="", y="") +
+  theme_classic() +
+  theme(axis.text.x=element_text(angle=65, hjust=1, size=10))
+```
+
+*Note.* Variables that were dichotomized instead of split into quantiles due to skewed distributions: sexual interest in children in the male subsample; sexual interest in children, problematic porn use, and compulsive sexual behaviour in the female subsample.
+
+**Figure 3**
+
+*Probabilities of Proclivities for (Problematic) Behaviours per Predicted Class*
+
+*a) Male Subsample (n = 1,263)*
+
+```{r}
+## a) Males
+
+# Data
+prob_males <- import("./men's analysis/paramaters_males_k3.csv") %>% 
+  mutate(class_no=class_no+1) %>% 
+  filter(str_detect(variable, "Y_"), !str_detect(variable, "Yp_")) %>% 
+  mutate(class_no=case_when(class_no==1 ~ 'Class 1: "Multiple motivations"',
+                            class_no==2 ~ 'Class 2: "Mating prowess"',
+                            class_no==3 ~ 'Class 3: "Social needs"'),
+         variable=case_when(variable=="Y_proclSpeed_r" ~ "Speed",
+                            variable=="Y_proclDui_r" ~ "DUI",
+                            variable=="Y_proclRob_r" ~ "Rob a bank",
+                            variable=="Y_proclKill_r" ~ "Kill someone",
+                            variable=="Y_proclProstitute_r" ~ "Sex with prostitute",
+                            variable=="Y_proclRape_r" ~ "Sex without consent",
+                            variable=="Y_proclZoo_r" ~ "Sex with animal",
+                            variable=="Y_proclPublic_r" ~ "Watch porn in public",
+                            variable=="Y_proclPornChild_r" ~ "Watch CSEM",
+                            variable=="Y_proclPornChildDarknet_r" ~ "Watch CSEM in Darknet",
+                            variable=="Y_proclChatChild_r" ~ "Online sex chat with child",
+                            variable=="Y_proclGiftChild_r" ~ "Pay/gift for CSEM",
+                            variable=="Y_proclSexChild_r" ~ "Contact sex with child"),
+         variable=factor(variable, levels=c("Sex with prostitute", "Watch porn in public", "Sex without consent", "Sex with animal",
+                                            "Watch CSEM", "Watch CSEM in Darknet", "Online sex chat with child", "Pay/gift for CSEM",
+                                            "Contact sex with child", "Speed", "DUI", "Rob a bank", "Kill someone")))
+
+# Plot
+ggplot(prob_males, aes(x=variable, y=value, group=as.factor(class_no), linetype=as.factor(class_no))) +
+  geom_line() +
+  geom_point(aes(shape=as.factor(class_no))) +
+  scale_linetype_manual(name=NULL, values=c("solid", "dotted", "dashed")) +
+  scale_shape_manual(name=NULL, values=c(0, 3, 1)) +
+  labs(x="", y="Probability") +
+  theme_classic() +
+  theme(axis.text.x=element_text(angle=45, hjust=1, size=8))
+```
+
+*b) Female Subsample (n = 1,420)*
+
+```{r}
+## b) Females
+
+# Data
+prob_females <- import("./women's analysis/parameters_females_k3.csv") %>% 
+  mutate(class_no=class_no+1) %>% 
+  filter(str_detect(variable, "Y_"), !str_detect(variable, "Yp_")) %>% 
+  mutate(class_no=case_when(class_no==1 ~ 'Class 1: "Social needs"',
+                            class_no==2 ~ 'Class 2: "Mating prowess"',
+                            class_no==3 ~ 'Class 3: "Multiple motivations"'),
+         variable=case_when(variable=="Y_proclSpeed_r" ~ "Speed",
+                            variable=="Y_proclDui_r" ~ "DUI",
+                            variable=="Y_proclRob_r" ~ "Rob a bank",
+                            variable=="Y_proclKill_r" ~ "Kill someone",
+                            variable=="Y_proclProstitute_r" ~ "Sex with prostitute",
+                            variable=="Y_proclRape_r" ~ "Sex without consent",
+                            variable=="Y_proclZoo_r" ~ "Sex with animal",
+                            variable=="Y_proclPublic_r" ~ "Watch porn in public",
+                            variable=="Y_proclPornChild_r" ~ "Watch CSEM",
+                            variable=="Y_proclPornChildDarknet_r" ~ "Watch CSEM in Darknet",
+                            variable=="Y_proclChatChild_r" ~ "Online sex chat with child",
+                            variable=="Y_proclGiftChild_r" ~ "Pay/gift for CSEM",
+                            variable=="Y_proclSexChild_r" ~ "Contact sex with child"),
+         variable=factor(variable, levels=c("Sex with prostitute", "Watch porn in public", "Sex without consent", "Sex with animal",
+                                            "Watch CSEM", "Watch CSEM in Darknet", "Online sex chat with child", "Pay/gift for CSEM",
+                                            "Contact sex with child", "Speed", "DUI", "Rob a bank", "Kill someone")))
+
+# Plot
+ggplot(prob_females, aes(x=variable, y=value, group=as.factor(class_no), linetype=as.factor(class_no))) +
+  geom_line() +
+  geom_point(aes(shape=as.factor(class_no))) +
+  scale_linetype_manual(name=NULL, values=c("dotted", "dashed", "solid")) +
+  scale_shape_manual(name=NULL, values=c(3, 1, 0)) +
+  labs(x="", y="Probability") +
+  theme_classic() +
+  theme(axis.text.x=element_text(angle=45, hjust=1, size=8))
+```
+
+*Note.* Because of the large differences in odds, items with much higher odds are displayed in a separate plot with a different scale. Propensity items: Sex with prostitute = "Engage in sexual activity with a prostitute", Watch porn in public = "Watch porn in public spaces such as a bus or library", Sex without consent = "Engage in sexual activity with an adult who does not agree or is not able to agree, for example, due to intoxication", Sex with animal = "Engage in sexual activity with an animal", Watch CSEM = "Watch porn depicting a child", Watch CSEM in Darknet = "Watch porn depicting a child on the Darknet", Online sex chat with child = "Flirting or having sexual conversations via chat or webcam with a child", Pay/gift for CSEM = "Pay or give gifts to a child for online sexual material (for example, videos, images, or online streaming)", Contact sex with child = "Have offline sex or sexual contact with a child", Speed = "Drive faster than the posted speed limit", DUI = "Drive under the influence of drugs/alcohol".
+
+**Figure D1**
+
+*Distributions of All Motivational Risk Factors with the Entire Sample (N = 2764)*
+
+```{r}
+# Data
+data <- haven::read_spss("./total sample's analysis/data/dataE_clear5 2209.sav") %>% 
+  select(CASE, sexdrive2, CSBD, PPCS_6, meffort, socialanx, lon, mvalue, attr)
+
+# Create long data frame for plotting, including only the relevant variables
+plotd_all <- data %>% select(CASE, sexdrive2, CSBD, PPCS_6, meffort, socialanx, lon, mvalue, attr) %>% 
+  pivot_longer(cols=sexdrive2:attr, names_to="var", values_to="score")
+
+# Plot
+ggplot(plotd_all %>% filter(var!="attr"), aes(x=factor(var, levels=c('sexdrive2', 'CSBD', 'PPCS_6', 'meffort', 'mvalue', 'socialanx',
+                                                                         'lon')), y=score, fill=var)) +
+  geom_flat_violin(scale="width") +
+  scale_fill_grey(start=.5, end=.9, aesthetics = "fill") +
+  geom_dotplot(binaxis="y", dotsize=.04, stackdir="down", binwidth=.3, position=position_nudge(-.025)) +
+  guides(fill="none") +
+  scale_x_discrete(labels=c("CSBD"="Compulsive sex.", "lon"="Loneliness", "meffort"="Mating effort", "mvalue"="Mate value", "PPCS_6"="Probl. porn use", "sexdrive2"="Sex drive", "socialanx"="Social anxiety")) +
+  labs(x="", y="Value") +
+  theme_classic() +
+  theme(axis.text.x=element_text(angle=45, hjust=1, size=10))
+
+# Plot attraction to children separately
+ggplot(plotd_all %>% filter(var=="attr"), aes(x=score)) +
+  geom_bar() +
+  theme_classic() +
+  labs(x="Sex. interest children", y="Count")
+```
+
+*Note.* Due to different scoring, the distribution for sexual interest in children is listed separately.
+
+**Figure E1**
+
+*CV LogLikelihood and BIC Values for Different Numbers of Classes: a) Male Subsample (n = 1,263), b) Female Subsample (n = 1,420)*
+
+```{r}
+## a) Males
+
+# BIC
+fit_males <- import("./men's analysis/fit_measures_males.csv")
+
+m3 <- ggplot(fit_males, aes(x=n_classes, y=bics)) +
+  geom_line() +
+  geom_point() +
+  scale_x_continuous(breaks=c(1:7)) +
+  scale_y_continuous(labels=function(x) format(x, big.mark=",")) +
+  labs(x="", y="BIC") +
+  theme_classic()
+
+# LogLikelihood
+cv_res_males <- import("./men's analysis/cv_results_males.csv")
+cv_res_males$V1 <- cv_res_males$V1+1
+
+m4 <- ggplot(cv_res_males, aes(x=V1, y=`Val. Log Likelihood`)) +
+  geom_line() +
+  geom_point() +
+  scale_x_continuous(breaks=c(1:7)) +
+  scale_y_continuous(labels=function(x) format(x, big.mark=",")) +
+  labs(x="", y="CV LogLikelihood") +
+  theme_classic()
+
+## b) Females
+
+# BIC
+fit_females <- import("./women's analysis/fit_measures_females.csv")[, -9]
+
+f3 <- ggplot(fit_females, aes(x=n_classes, y=bics)) +
+  geom_line() +
+  geom_point() +
+  scale_x_continuous(breaks=c(1:7)) +
+  scale_y_continuous(labels=function(x) format(x, big.mark=",")) +
+  labs(x="Classes", y="BIC") +
+  theme_classic()
+
+# LogLikelihood
+cv_res_females <- import("./women's analysis/cv_results_females.csv")
+cv_res_females$V1 <- cv_res_females$V1+1
+
+f4 <- ggplot(cv_res_females, aes(x=V1, y=`Val. Log Likelihood`)) +
+  geom_line() +
+  geom_point() +
+  scale_x_continuous(breaks=c(1:7)) +
+  scale_y_continuous(labels=function(x) format(x, big.mark=",")) +
+  labs(x="Classes", y="CV LogLikelihood") +
+  theme_classic()
+
+## Arrange plots together
+mf3 <- ggarrange(m3, f3, nrow=2, align="v", 
+                 labels=c('a)', 'b)'), font.label=list(size=12, face='plain'), vjust=c(1, 0))
+mf4 <- ggarrange(m4, f4, nrow=2, align="v")
+ggarrange(mf3, mf4, ncol=2, align='h')
+```
+
+*Note.* CV LogLikelihood = mean log-likelihood over all holdout-samples.
