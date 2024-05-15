@@ -25,5 +25,3 @@ ggplot(cv_res_males, aes(x=V1, y=`Val. Log Likelihood`)) +
 ```
 
 *Note.* CV LogLikelihood = mean log-likelihood over all holdout-samples.
-
-
