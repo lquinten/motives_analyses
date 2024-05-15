@@ -65,7 +65,7 @@ So first we read in the dataframe with the bootstrapped samples.
 #read in the data 
 bootstrapped_params_f <- read_csv("bootstrapped_samples_k3.csv") %>% select(-rep) 
 
-sm_params_m <- read_csv("parameters_males_k3.csv") %>%
+sm_params_f <- read_csv("parameters_females_k3.csv") %>%
   filter(model == "structural") %>%
   select(variable, value, class_no) %>%
   pivot_wider(values_from = value,
@@ -90,7 +90,7 @@ sm_CIs_f <- sm_CIs_f %>%
   pivot_wider(values_from = c(LB_0.025, UB_0.975), #pivot dataframe
               names_from = class_no,
               names_glue = "class{class_no}_{.value}") %>%
-  full_join(sm_params_m, by= "variable") %>% #join with the actual estimated parameter values
+  full_join(sm_params_f, by= "variable") %>% #join with the actual estimated parameter values
   mutate(class0_sig = case_when((class0_LB_0.025 > 0.5) |                                    (0.5 > class0_UB_0.975) ~ "significant",
                                 .default = "not_significant" ), #significance class 0
          class1_sig = case_when((class1_LB_0.025 > 0.5) |                                    (0.5 > class1_UB_0.975) ~ "significant",
@@ -111,4 +111,36 @@ CI_mixture_f <- bootstrapped_params_f %>%
   group_by(class_no) %>% #group_by classes   
   summarise(LB = quantile(value, probs=c(0.025, 0.975))[1], #get bounds of CIs
             UB = quantile(value, probs=c(0.025, 0.975))[2])  
+```
+
+We compute bootstrapped confidence intervals for OR for the different classes.
+
+```{r}
+#Point estimates for OddsRatios
+OR_f <- sm_params_f %>%
+  rename("social"="class0_parameter", "mating" ="class1_parameter", "multiple"="class2_parameter") %>%  
+  mutate(across(all_of(c("social", "mating", "multiple")), ~.x/(1-.x), .names = "Odds_{col}")) %>% 
+  mutate(OR_multiple_mating = Odds_multiple/Odds_mating,
+         OR_multiple_social = Odds_multiple/Odds_social,
+         OR_mating_social = Odds_mating/Odds_social) %>%
+  select(variable, starts_with("OR"))
+  
+
+
+#Bootstrapped CIs for Odds Ratios
+CI_OR_f <- sm_boot_params_f %>% 
+  mutate(boot_id = rep(1:500,sm_boot_params_f %>% 
+                         select(class_no, variable) %>% 
+                         n_distinct()), #create an id column that makes it possibel to find every bootstrapping iteration
+         odds = value/(1-value)) %>% #compute odds from the probability values
+  select(-value) %>% 
+  pivot_wider(names_from = class_no, values_from = odds) %>% #get a wider dataframe for OR computations
+  rename(social="0", mating ="1", multiple="2") %>% #rename columns for better understanding
+  mutate(OR_multiple_mating = multiple/mating, #compute ORs for each bootstrap iteration
+         OR_multiple_social = multiple/social,
+         OR_mating_social = mating/social) %>% 
+  select(variable, starts_with("OR")) %>% 
+  group_by(variable) %>% #group by each outcome variable & compute upper and lower limits for each confidence interval 
+  summarise(across(starts_with("OR"),~quantile(.x, probs=c(0.025, 0.975))[1], .names = "LB_{col}"),
+            across(starts_with("OR"),~quantile(.x, probs=c(0.025, 0.975))[2], .names = "UB_{col}"))
 ```

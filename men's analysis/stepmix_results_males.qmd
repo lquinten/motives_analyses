@@ -134,3 +134,35 @@ CI_mixture_m <- bootstrapped_params_m %>%
 
 
 ```
+
+We compute bootstrapped confidence intervals for OR between the classes. 
+
+```{r}
+#Point estimates for OddsRatios
+OR_m <- sm_params_m %>%
+  rename("social"="class0_parameter", "mating" ="class1_parameter", "multiple"="class2_parameter") %>%  
+  mutate(across(all_of(c("social", "mating", "multiple")), ~.x/(1-.x), .names = "Odds_{col}")) %>% 
+  mutate(OR_multiple_mating = Odds_multiple/Odds_mating,
+         OR_multiple_social = Odds_multiple/Odds_social,
+         OR_mating_social = Odds_mating/Odds_social) %>%
+  select(variable, starts_with("OR"))
+
+
+
+CI_OR_m <- sm_boot_params_m %>% 
+  mutate(boot_id = rep(1:500,sm_boot_params_m %>% 
+                         select(class_no, variable) %>% 
+                         n_distinct()), #create an id column that makes it possibel to find every bootstrapping iteration
+         odds = value/(1-value)) %>% #compute odds from the probability values
+  select(-value) %>% 
+  pivot_wider(names_from = class_no, values_from = odds) %>% #get a wider dataframe for OR computations
+  rename(multiple="0", mating ="1", social="2") %>% #rename columns for better understanding
+  mutate(OR_multiple_mating = multiple/mating, #compute ORs for each bootstrap iteration
+         OR_multiple_social = multiple/social,
+         OR_mating_social = mating/social) %>% 
+  select(variable, starts_with("OR")) %>% 
+  group_by(variable) %>% #group by each outcome variable & compute upper and lower limits for each confidence interval 
+  summarise(across(starts_with("OR"),~quantile(.x, probs=c(0.025, 0.975))[1], .names = "LB_{col}"),
+            across(starts_with("OR"),~quantile(.x, probs=c(0.025, 0.975))[2], .names = "UB_{col}"))
+```
+
