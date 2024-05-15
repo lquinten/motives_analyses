@@ -39,7 +39,7 @@ p_f <- p_f %>% mutate(pred_class = map_dbl(1:nrow(p_f),~p_f %>% select(-n_classe
 #Get n_min and insert it o the fit_measures_f data_frame  
 fit_measures_f <- fit_measures_f %>% 
   mutate(n_min = p_f %>% #take the probabilities frame
-           group_by(n_classes, pred_class) %>%                                               summarise(n_min = n()/1263) %>% #see how big relative to n each class in each model is
+           group_by(n_classes, pred_class) %>%                                               summarise(n_min = n()/1420) %>% #see how big relative to n each class in each model is
            ungroup() %>%
            group_by(n_classes) %>%
            slice_min(n_min) %>% #return the size value of the smallest class in each model
