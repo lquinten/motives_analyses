@@ -137,9 +137,10 @@ param_males <- rbind(param_males, param_males %>% filter(model_name=="binary") %
   mutate(variable=str_replace(variable, "_6", "6")) %>% 
   arrange(variable) %>% 
   separate_wider_delim(variable, "_", names=c("variable", "Category")) %>% 
-  mutate(class_no=case_when(class_no==1 ~ 'Class 1: "Multiple motivations"',
-                            class_no==2 ~ 'Class 2: "Mating prowess"',
-                            class_no==3 ~ 'Class 3: "Social needs"'))
+  mutate(class_no=case_when(class_no==1 ~ '"Multiple motivations"',
+                            class_no==2 ~ '"Mating prowess"',
+                            class_no==3 ~ '"Social needs"')) %>% 
+  mutate(class_no=factor(class_no, levels=c('"Mating prowess"', '"Social needs"', '"Multiple motivations"')))
 
 # Plot
 ggplot(param_males, aes(x=factor(variable, levels=c('attr', 'sexdrive2', 'CSBD', 'PPCS6', 'meffort', 'mvalue', 'socialanx', 'lon')),
@@ -169,9 +170,10 @@ param_females <- rbind(param_females, param_females %>% filter(model_name=="bina
   mutate(variable=str_replace(variable, "_6", "6")) %>% 
   arrange(variable) %>% 
   separate_wider_delim(variable, "_", names=c("variable", "Category")) %>% 
-  mutate(class_no=case_when(class_no==1 ~ 'Class 1: "Social needs"',
-                            class_no==2 ~ 'Class 2: "Mating prowess"',
-                            class_no==3 ~ 'Class 3: "Multiple motivations"'))
+  mutate(class_no=case_when(class_no==1 ~ '"Social needs"',
+                            class_no==2 ~ '"Mating prowess"',
+                            class_no==3 ~ '"Multiple motivations"')) %>% 
+  mutate(class_no=factor(class_no, levels=c('"Mating prowess"', '"Social needs"', '"Multiple motivations"')))
 
 # Plot
 ggplot(param_females, aes(x=factor(variable, levels=c('attr', 'sexdrive2', 'CSBD', 'PPCS6', 'meffort', 'mvalue', 'socialanx', 'lon')), 
