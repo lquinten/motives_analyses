@@ -4,82 +4,56 @@ output: word_document
 ---
 
 ```{r setup, include=F, message=F, warning=F}
-knitr::opts_chunk$set(echo=F, warning=F, message=F)
 library(tidyverse)
 ```
 
 *1) Correlations for the Male Subsample*
 
 ```{r correlation_male}
-data_m <- haven::read_spss("./data/dataE_2112.sav") %>% dplyr::select(CASE, gender, sexdrive2, CSBD, PPCS_6, meffort, socialanx, lon, mvalue, attr, starts_with("Y") & ends_with("r") & !ends_with("YP_r")) %>% #remove YP items
-  filter(gender == 2) %>% dplyr::select(-gender)
+data_m <- haven::read_spss("./data/dataE_1402.sav") %>% 
+  select(gender, sexdrive2, CSBD, PPCS_6, meffort, socialanx, lon, mvalue, attr, starts_with("Y") & ends_with("r") & !ends_with("YP_r")) %>% #remove YP items
+  filter(gender == 2) %>% 
+  select(-gender)
 
-colnames(data_m) <- c("CASE","Sex drive", "Compulsive sex. behaviour", "Probl. porn use", "Mating effort", "Social anxiety", "Loneliness", "Mate value", "Sexual interest in children", "Speed", "DUI", "Rob a bank", "Kill someone", "Sex with prostitute", "Sex without consent", "Sex with animal", "Watch porn in public", "Watch CSEM", "Watch CSEM in darknet", "Online sex chat with child", "Pay/gift for CSEM", "Contact sex with child")
+colnames(data_m) <- c("Sex drive", "Compulsive sex. behaviour", "Probl. porn use", "Mating effort", "Social anxiety", "Loneliness", "Mate value", "Sex. interest children", "Speed", "DUI", "Rob a bank", "Kill someone", "Sex with prostitute", "Sex without consent", "Sex with animal", "Watch porn in public", "Watch CSEM", "Watch CSEM in darknet", "Online sex chat with child", "Pay/gift for CSEM", "Contact sex with child")
 
-data_m <- data_m%>% select("CASE","Sexual interest in children","Sex drive", "Compulsive sex. behaviour", "Probl. porn use", "Mating effort", "Social anxiety", "Loneliness", "Mate value", "Sex with prostitute", "Watch porn in public", "Sex without consent", "Sex with animal", "Watch CSEM", "Watch CSEM in darknet", "Online sex chat with child", "Pay/gift for CSEM", "Contact sex with child", "Speed", "DUI", "Rob a bank", "Kill someone") %>% rev()
+data_m <- data_m %>% select("Sex. interest children", "Sex drive", "Compulsive sex. behaviour", "Probl. porn use", "Mating effort", "Mate value", "Social anxiety", "Loneliness", "Sex with prostitute", "Watch porn in public", "Sex without consent", "Sex with animal", "Watch CSEM", "Watch CSEM in darknet", "Online sex chat with child", "Pay/gift for CSEM", "Contact sex with child", "Speed", "DUI", "Rob a bank", "Kill someone") %>% rev()
 
 # creating correlation matrix
-corr_mat_m <- round(cor(data_m %>% select(-CASE), method="spearman"), 2)
+corr_mat_m <- round(cor(data_m, method="spearman"), 2)
 
 rownames(corr_mat_m) <- colnames(corr_mat_m)
 ggcorrplot::ggcorrplot(corr_mat_m, hc.order=F, outline.col="white", legend.title="Correlation", colors=c("#0072B2", "white", "#D55E00")) +
   labs(x="", y="") +
   theme_classic() +
-  theme(axis.text.x=element_text(angle=50, hjust=1, size=9, 
-                                 face = c(rep("bold", 3), rep('plain', 4), "bold", rep('plain', 5),
-                                          rep("bold", 4), rep("plain", 4))),
-        axis.text.y=element_text(face = c(rep("bold", 3), rep('plain', 4), "bold", rep('plain', 5),
-                                          rep("bold", 4), rep("plain", 4))))
-ggsave("./out/corrplot_m.jpg", device="jpeg")
+  theme(axis.text.x=element_text(angle=50, hjust=1, size=9, face = c(rep("bold", 8), rep('plain', 13))),
+        axis.text.y=element_text(hjust=1, size=9, face = c(rep("plain", 13), rep('bold', 8)))) +
+  scale_x_discrete(limits=rev)
 ```
 
 *2) Correlations for the Female Subsample*
 
-```{r correlation_male}
-data_f <- haven::read_spss("./data/dataE_2112.sav") %>% dplyr::select(CASE, gender, sexdrive2, CSBD, PPCS_6, meffort, socialanx, lon, mvalue, attr, starts_with("Y") & ends_with("r") & !ends_with("YP_r")) %>% filter(gender == 1) %>% dplyr::select(-gender)
+```{r correlation_female}
+data_f <- haven::read_spss("./data/dataE_1402.sav") %>% 
+  select(gender, sexdrive2, CSBD, PPCS_6, meffort, socialanx, lon, mvalue, attr, starts_with("Y") & ends_with("r") & !ends_with("YP_r")) %>%
+  filter(gender == 1) %>% 
+  select(-gender)
 
-colnames(data_f) <- c("CASE","Sex drive", "Compulsive sex. behaviour", "Probl. porn use", "Mating effort", "Social anxiety", "Loneliness", "Mate value", "Sexual interest in children", "Speed", "DUI", "Rob a bank", "Kill someone", "Sex with prostitute", "Sex without consent", "Sex with animal", "Watch porn in public", "Watch CSEM", "Watch CSEM in darknet", "Online sex chat with child", "Pay/gift for CSEM", "Contact sex with child")
+colnames(data_f) <- c("Sex drive", "Compulsive sex. behaviour", "Probl. porn use", "Mating effort", "Social anxiety", "Loneliness", "Mate value", "Sex. interest children", "Speed", "DUI", "Rob a bank", "Kill someone", "Sex with prostitute", "Sex without consent", "Sex with animal", "Watch porn in public", "Watch CSEM", "Watch CSEM in darknet", "Online sex chat with child", "Pay/gift for CSEM", "Contact sex with child")
 
-data_f <- data_f%>% select("CASE","Sexual interest in children","Sex drive", "Compulsive sex. behaviour", "Probl. porn use", "Mating effort", "Social anxiety", "Loneliness", "Mate value", "Sex with prostitute", "Watch porn in public", "Sex without consent", "Sex with animal", "Watch CSEM", "Watch CSEM in darknet", "Online sex chat with child", "Pay/gift for CSEM", "Contact sex with child", "Speed", "DUI", "Rob a bank", "Kill someone") %>% rev()
+data_f <- data_f %>% select("Sex. interest children", "Sex drive", "Compulsive sex. behaviour", "Probl. porn use", "Mating effort", "Social anxiety", "Loneliness", "Mate value", "Sex with prostitute", "Watch porn in public", "Sex without consent", "Sex with animal", "Watch CSEM", "Watch CSEM in darknet", "Online sex chat with child", "Pay/gift for CSEM", "Contact sex with child", "Speed", "DUI", "Rob a bank", "Kill someone") %>% rev()
 
 # creating correlation matrix
-corr_mat_f <- round(cor(data_f %>% select(-CASE), method="spearman"), 2)
+corr_mat_f <- round(cor(data_f, method="spearman"), 2)
 
 rownames(corr_mat_f) <- colnames(corr_mat_f)
 ggcorrplot::ggcorrplot(corr_mat_f, hc.order=F, outline.col="white", legend.title="Correlation", colors=c("#0072B2", "white", "#D55E00")) +
   labs(x="", y="") +
   theme_classic() +
-  theme(axis.text.x=element_text(angle=50, hjust=1, size=9, 
-                                 face = c(rep("bold", 5), rep('plain', 2), "bold", rep('plain', 11),
-                                          rep("bold", 2))),
-        axis.text.y=element_text(face = c(rep("bold", 5), rep('plain', 2), "bold", rep('plain', 11),
-                                          rep("bold", 2))))
-ggsave("./out/corrplot_f.jpg", device="jpeg")
+  theme(axis.text.x=element_text(angle=50, hjust=1, size=9, face = c(rep("bold", 8), rep('plain', 13))),
+        axis.text.y=element_text(hjust=1, size=9, face = c(rep("plain", 13), rep('bold', 8)))) +
+  scale_x_discrete(limits=rev)
 ```
 
-*3) Correlations for the Entire Sample*
-
-```{r correlation_whole}
-data <- haven::read_spss("./data/dataE_2112.sav") %>% dplyr::select(CASE, sexdrive2, CSBD, PPCS_6, meffort, socialanx, lon, mvalue, attr, starts_with("Y") & ends_with("r") & !ends_with("YP_r"))
-# creating correlation matrix
-corr_mat <- round(cor(data %>% select(-CASE), method="spearman"), 2)
-#p.mat <- ggcorrplot::cor_pmat(data %>% select(-CASE)) #if we want to include p values
-
-colnames(corr_mat) <- c("Sex drive", "Compulsive sex.", "Probl. porn use", "Mating effort", "Social anxiety", "Loneliness", "Mate value", "Attraction to children", "Speed", "DUI", "Rob", "Kill", "Prostitute", "Rape", "Zoophilia", "Public porn", "Porn child", "Porn child darknet", "Chat child", "Gift child", "Sex child")
-rownames(corr_mat) <- colnames(corr_mat)
-ggcorrplot::ggcorrplot(corr_mat, hc.order=T, outline.col="white", legend.title="Correlation", colors=c("#0072B2", "white", "#D55E00")
-                       #, p.mat = p.mat, insig="blank"
-                       ) +
-  labs(x="", y="") +
-  theme_classic() +
-  theme(axis.text.x=element_text(angle=50, hjust=1, size=9, 
-                                 face = c(rep('bold', 2), rep("plain", 4), rep('bold', 2), 
-                                          rep("plain", 4), "bold", rep("plain", 2), rep("bold", 2),
-                                          rep("plain", 2), "bold", "plain")),
-        axis.text.y=element_text(face = c(rep('bold', 2), rep("plain", 4), rep('bold', 2), 
-                                          rep("plain", 4), "bold", rep("plain", 2), rep("bold", 2),
-                                          rep("plain", 2), "bold", "plain")))
-```
-
-*Note.* Rob = “Robbing a bank”, Kill = “Killing someone”, Speed = “Driving faster than the posted speed limit”, DUI = “Driving under the influence of drugs/alcohol”, Zoophilia = "Engaging in sexual activity with an animal", Chat child = “Flirting or having sexual conversations via chat or webcam with a child”, Gift child = “Paying or giving gifts to a child for online sexual material (for example, videos, images, or online streaming)”, Sex child = “Having offline sex or sexual contact with a child”, Porn child = “Watching porn depicting a child”, Porn child darknet = “Watching porn depicting a child on the Darknet”, Prostitute = “Engaging in sexual activity with a prostitute”, Public porn = “Watching pproorn in public spaces such as a bus or library”, Rape = “Engaging in sexual activity with an adult who does not agree or is not able to agree, for example, due to intoxication”. Motivational risk factors are displayed in bold.
+*Note.* Rob = “Robbing a bank”, Kill = “Killing someone”, Speed = “Driving faster than the posted speed limit”, DUI = “Driving under the influence of drugs/alcohol”, Zoophilia = "Engaging in sexual activity with an animal", Chat child = “Flirting or having sexual conversations via chat or webcam with a child”, Gift child = “Paying or giving gifts to a child for online sexual material (for example, videos, images, or online streaming)”, Sex child = “Having offline sex or sexual contact with a child”, Porn child = “Watching porn depicting a child”, Porn child darknet = “Watching porn depicting a child on the Darknet”, Prostitute = “Engaging in sexual activity with a prostitute”, Public porn = “Watching porn in public spaces such as a bus or library”, Rape = “Engaging in sexual activity with an adult who does not agree or is not able to agree, for example, due to intoxication”. Motivational risk factors are displayed in bold.
 

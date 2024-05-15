@@ -128,7 +128,7 @@ ggarrange(mf1, mf2, ncol=2, align='h')
 ## a) Males
 
 # Data
-param_males <- import("./men's analysis/paramaters_males_k3.csv") %>% 
+param_males <- import("./men's analysis/parameters_males_k3.csv") %>% 
   mutate(class_no=class_no+1) %>% 
   filter(!str_detect(variable, "Y_"), model_name!="class_weights") %>% 
   mutate(variable=case_when(variable=="attr" ~ str_c(variable, "_2"), .default=variable))
@@ -137,9 +137,10 @@ param_males <- rbind(param_males, param_males %>% filter(model_name=="binary") %
   mutate(variable=str_replace(variable, "_6", "6")) %>% 
   arrange(variable) %>% 
   separate_wider_delim(variable, "_", names=c("variable", "Category")) %>% 
-  mutate(class_no=case_when(class_no==1 ~ 'Class 1: "Multiple motivations"',
-                            class_no==2 ~ 'Class 2: "Mating prowess"',
-                            class_no==3 ~ 'Class 3: "Social needs"'))
+  mutate(class_no=case_when(class_no==1 ~ '"Multiple motivations"',
+                            class_no==2 ~ '"Mating prowess"',
+                            class_no==3 ~ '"Social needs"')) %>% 
+  mutate(class_no=factor(class_no, levels=c('"Mating prowess"', '"Social needs"', '"Multiple motivations"')))
 
 # Plot
 ggplot(param_males, aes(x=factor(variable, levels=c('attr', 'sexdrive2', 'CSBD', 'PPCS6', 'meffort', 'mvalue', 'socialanx', 'lon')),
@@ -169,9 +170,10 @@ param_females <- rbind(param_females, param_females %>% filter(model_name=="bina
   mutate(variable=str_replace(variable, "_6", "6")) %>% 
   arrange(variable) %>% 
   separate_wider_delim(variable, "_", names=c("variable", "Category")) %>% 
-  mutate(class_no=case_when(class_no==1 ~ 'Class 1: "Social needs"',
-                            class_no==2 ~ 'Class 2: "Mating prowess"',
-                            class_no==3 ~ 'Class 3: "Multiple motivations"'))
+  mutate(class_no=case_when(class_no==1 ~ '"Social needs"',
+                            class_no==2 ~ '"Mating prowess"',
+                            class_no==3 ~ '"Multiple motivations"')) %>% 
+  mutate(class_no=factor(class_no, levels=c('"Mating prowess"', '"Social needs"', '"Multiple motivations"')))
 
 # Plot
 ggplot(param_females, aes(x=factor(variable, levels=c('attr', 'sexdrive2', 'CSBD', 'PPCS6', 'meffort', 'mvalue', 'socialanx', 'lon')), 
@@ -201,9 +203,9 @@ ggplot(param_females, aes(x=factor(variable, levels=c('attr', 'sexdrive2', 'CSBD
 prob_males <- import("./men's analysis/paramaters_males_k3.csv") %>% 
   mutate(class_no=class_no+1) %>% 
   filter(str_detect(variable, "Y_"), !str_detect(variable, "Yp_")) %>% 
-  mutate(class_no=case_when(class_no==1 ~ 'Class 1: "Multiple motivations"',
-                            class_no==2 ~ 'Class 2: "Mating prowess"',
-                            class_no==3 ~ 'Class 3: "Social needs"'),
+  mutate(class_no=case_when(class_no==1 ~ '"Multiple motivations"',
+                            class_no==2 ~ '"Mating prowess"',
+                            class_no==3 ~ '"Social needs"'),
          variable=case_when(variable=="Y_proclSpeed_r" ~ "Speed",
                             variable=="Y_proclDui_r" ~ "DUI",
                             variable=="Y_proclRob_r" ~ "Rob a bank",
@@ -219,17 +221,18 @@ prob_males <- import("./men's analysis/paramaters_males_k3.csv") %>%
                             variable=="Y_proclSexChild_r" ~ "Contact sex with child"),
          variable=factor(variable, levels=c("Sex with prostitute", "Watch porn in public", "Sex without consent", "Sex with animal",
                                             "Watch CSEM", "Watch CSEM in Darknet", "Online sex chat with child", "Pay/gift for CSEM",
-                                            "Contact sex with child", "Speed", "DUI", "Rob a bank", "Kill someone")))
+                                            "Contact sex with child", "Speed", "DUI", "Rob a bank", "Kill someone"))) %>% 
+  mutate(class_no=factor(class_no, levels=c('"Mating prowess"', '"Social needs"', '"Multiple motivations"')))
 
 # Plot
 ggplot(prob_males, aes(x=variable, y=value, group=as.factor(class_no), linetype=as.factor(class_no))) +
   geom_line() +
   geom_point(aes(shape=as.factor(class_no))) +
-  scale_linetype_manual(name=NULL, values=c("solid", "dotted", "dashed")) +
-  scale_shape_manual(name=NULL, values=c(0, 3, 1)) +
+  scale_linetype_manual(name=NULL, values=c("dotted", "dashed", "solid")) +
+  scale_shape_manual(name=NULL, values=c(3, 1, 0)) +
   labs(x="", y="Probability") +
   theme_classic() +
-  theme(axis.text.x=element_text(angle=45, hjust=1, size=8))
+  theme(axis.text.x=element_text(angle=45, hjust=1, size=10))
 ```
 
 *b) Female Subsample (n = 1,420)*
@@ -241,9 +244,9 @@ ggplot(prob_males, aes(x=variable, y=value, group=as.factor(class_no), linetype=
 prob_females <- import("./women's analysis/parameters_females_k3.csv") %>% 
   mutate(class_no=class_no+1) %>% 
   filter(str_detect(variable, "Y_"), !str_detect(variable, "Yp_")) %>% 
-  mutate(class_no=case_when(class_no==1 ~ 'Class 1: "Social needs"',
-                            class_no==2 ~ 'Class 2: "Mating prowess"',
-                            class_no==3 ~ 'Class 3: "Multiple motivations"'),
+  mutate(class_no=case_when(class_no==1 ~ '"Social needs"',
+                            class_no==2 ~ '"Mating prowess"',
+                            class_no==3 ~ '"Multiple motivations"'),
          variable=case_when(variable=="Y_proclSpeed_r" ~ "Speed",
                             variable=="Y_proclDui_r" ~ "DUI",
                             variable=="Y_proclRob_r" ~ "Rob a bank",
@@ -259,7 +262,8 @@ prob_females <- import("./women's analysis/parameters_females_k3.csv") %>%
                             variable=="Y_proclSexChild_r" ~ "Contact sex with child"),
          variable=factor(variable, levels=c("Sex with prostitute", "Watch porn in public", "Sex without consent", "Sex with animal",
                                             "Watch CSEM", "Watch CSEM in Darknet", "Online sex chat with child", "Pay/gift for CSEM",
-                                            "Contact sex with child", "Speed", "DUI", "Rob a bank", "Kill someone")))
+                                            "Contact sex with child", "Speed", "DUI", "Rob a bank", "Kill someone"))) %>% 
+  mutate(class_no=factor(class_no, levels=c('"Mating prowess"', '"Social needs"', '"Multiple motivations"')))
 
 # Plot
 ggplot(prob_females, aes(x=variable, y=value, group=as.factor(class_no), linetype=as.factor(class_no))) +
@@ -269,7 +273,7 @@ ggplot(prob_females, aes(x=variable, y=value, group=as.factor(class_no), linetyp
   scale_shape_manual(name=NULL, values=c(3, 1, 0)) +
   labs(x="", y="Probability") +
   theme_classic() +
-  theme(axis.text.x=element_text(angle=45, hjust=1, size=8))
+  theme(axis.text.x=element_text(angle=45, hjust=1, size=10))
 ```
 
 *Note.* Because of the large differences in odds, items with much higher odds are displayed in a separate plot with a different scale. Propensity items: Sex with prostitute = "Engage in sexual activity with a prostitute", Watch porn in public = "Watch porn in public spaces such as a bus or library", Sex without consent = "Engage in sexual activity with an adult who does not agree or is not able to agree, for example, due to intoxication", Sex with animal = "Engage in sexual activity with an animal", Watch CSEM = "Watch porn depicting a child", Watch CSEM in Darknet = "Watch porn depicting a child on the Darknet", Online sex chat with child = "Flirting or having sexual conversations via chat or webcam with a child", Pay/gift for CSEM = "Pay or give gifts to a child for online sexual material (for example, videos, images, or online streaming)", Contact sex with child = "Have offline sex or sexual contact with a child", Speed = "Drive faster than the posted speed limit", DUI = "Drive under the influence of drugs/alcohol".
