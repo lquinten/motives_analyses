@@ -1,0 +1,114 @@
+---
+title: "stepmix_results_females"
+format: html
+editor: visual
+---
+
+### Library & loading data
+
+We need to load our standard packages plus the package tidysem.
+
+```{r}
+library(tidyverse) 
+library(tidySEM)
+```
+
+We load in the exported results from stepmix in python.
+
+```{r}
+#Import the predicted class memberships csv  
+p_f <- read_csv("posterior_class_probs_females.csv")[,-1] %>% select(n_classes, matches("[[:digit:]]"))  
+fit_measures_f <- read.csv("./fit_measures_females.csv")  %>% select(-n_parameters.1)
+```
+
+## fit measures
+
+Now we want to derive a few measures for the models that are derived from van Lissa et al. (2023): n_min and min_prob.
+
+n_min describes the number of cases that would have been categorised in the smallest class of the model. The logic behind that being that if the smallest class is too small there are also too few cases to learn the parameters that distinguish that class.
+
+prob_min is a little more complex and I still need to understand it correctly from the Van Lissa text.
+
+```{r}
+#Transform na into 0. 
+replace_0 <- rep_len(0, 8) %>% as.list() 
+names(replace_0)<-colnames(p_f)   #Replace NA with 0 in the whole dataframe  
+p_f <- replace_na(p_f, replace_0)   
+#Get get the predicted class-membership  
+p_f <- p_f %>% mutate(pred_class = map_dbl(1:nrow(p_f),~p_f %>% select(-n_classes) %>% slice(.x) %>% which.max()))   
+#Get n_min and insert it o the fit_measures_f data_frame  
+fit_measures_f <- fit_measures_f %>% 
+  mutate(n_min = p_f %>% #take the probabilities frame
+           group_by(n_classes, pred_class) %>%                                               summarise(n_min = n()/1263) %>% #see how big relative to n each class in each model is
+           ungroup() %>%
+           group_by(n_classes) %>%
+           slice_min(n_min) %>% #return the size value of the smallest class in each model
+           pull(n_min))
+```
+
+Now we add the np-ratio value to the fit_measures_f table. It is n/number of parameters. Recognize
+
+```{r}
+fit_measures_f <- fit_measures_f %>% mutate(np_ratio = 1263/n_parameters)
+```
+
+We skip prob-min and prob_max as they are too cumbersome to compute for now. The fit_measures_f tibble has all fitmeasures and quality estimates we have at the moment.
+
+## Bootstrapped significance tests for distal outcome analysis
+
+We want some information on the significance of the probabilities per class. We can get that through bootstrapping the model 500 times. We than take the 95% percentile of the parameters. If the interval encloses .5 then the class membership does not significantly tell us anything about the propensity items (e.g. if someone belongs to class xyz it is still a coin flit whether that person will answer something different than zero on a specific propensity item).
+
+So first we read in the dataframe with the bootstrapped samples.
+
+```{r}
+#| label: bootstrapped_data  
+#read in the data 
+bootstrapped_params_f <- read_csv("bootstrapped_samples_k3.csv") %>% select(-rep) 
+
+sm_params_m <- read_csv("parameters_males_k3.csv") %>%
+  filter(model == "structural") %>%
+  select(variable, value, class_no) %>%
+  pivot_wider(values_from = value,
+              names_from = class_no,
+              names_glue = "class{class_no}_parameter")   
+
+#select the structural parameters  
+sm_boot_params_f <- bootstrapped_params_f %>%
+  filter(model == "structural") %>%
+  select(class_no, variable, value)   
+
+#summarise CIs 
+sm_CIs_f <- sm_boot_params_f %>%
+  select(class_no, variable, value) %>%
+  group_by(class_no, variable)  %>%
+  summarise(LB_0.025 = quantile(value, probs = c(0.025, 0.975))[1],
+            UB_0.975 = quantile(value, probs = c(0.025, 0.975))[2]) %>%
+  ungroup()  
+
+#Pivot dataframe for convenience reading, join with the sm_params_m tibble & compute significance decisions. Significance decisions are based on the dichotomous nature of the outcomes. If the 95 % CI of the parameters encloses 0.5, than the membership of that class tells us nothing about the propensity of a person to give a propensity other than zero.   
+sm_CIs_f <- sm_CIs_f %>%
+  pivot_wider(values_from = c(LB_0.025, UB_0.975), #pivot dataframe
+              names_from = class_no,
+              names_glue = "class{class_no}_{.value}") %>%
+  full_join(sm_params_m, by= "variable") %>% #join with the actual estimated parameter values
+  mutate(class0_sig = case_when((class0_LB_0.025 > 0.5) |                                    (0.5 > class0_UB_0.975) ~ "significant",
+                                .default = "not_significant" ), #significance class 0
+         class1_sig = case_when((class1_LB_0.025 > 0.5) |                                    (0.5 > class1_UB_0.975) ~ "significant",
+                                .default = "not_significant"), #significance class 1
+         class2_sig = case_when((class2_LB_0.025 > 0.5) |                                    (0.5 > class2_UB_0.975) ~ "significant",
+                                .default = "not_significant" )) %>% #significance class 2
+  relocate(variable, contains("class0"), contains("class1"), contains("class2")) #nicely order the dataframe  
+```
+
+Now we want to additionally give bootstrapped CIs for the mixture parameters, because they vary in part strongly from what we estimated in the last analysis script.
+
+```{r}
+#| label: CI_mixture_f  
+#compute 95% CI for mixture parameters 
+CI_mixture_f <- bootstrapped_params_f %>%
+  filter(model_name == "class_weights") %>% #filter mixture parameters   
+  select(class_no, value) %>% #select necessary variables   
+  group_by(class_no) %>% #group_by classes   
+  summarise(LB = quantile(value, probs=c(0.025, 0.975))[1], #get bounds of CIs
+            UB = quantile(value, probs=c(0.025, 0.975))[2])  
+```
